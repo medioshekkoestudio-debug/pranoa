@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --altura-menu: 4rem;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  @apply bg-crema text-ciruela antialiased;
+}
+
+@layer components {
+  .btn-primario {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-oliva px-5 py-3 font-semibold text-white shadow-sm transition active:scale-[0.98] hover:bg-oliva-oscuro disabled:opacity-50;
+  }
+  .btn-naranja {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-naranja px-5 py-3 font-semibold text-white shadow-sm transition active:scale-[0.98] hover:bg-naranja-oscuro disabled:opacity-50;
+  }
+  .btn-secundario {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ciruela/20 bg-white px-5 py-3 font-semibold text-ciruela transition active:scale-[0.98] hover:border-ciruela/40 disabled:opacity-50;
+  }
+  .btn-peligro {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50;
+  }
+  .btn-chico {
+    @apply inline-flex items-center justify-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition active:scale-[0.97] disabled:opacity-50;
+  }
+  .tarjeta {
+    @apply rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ciruela/5;
+  }
+  .campo {
+    @apply w-full rounded-xl border border-ciruela/15 bg-white px-4 py-3 text-ciruela outline-none transition placeholder:text-taupe/70 focus:border-oliva focus:ring-2 focus:ring-oliva/20;
+  }
+  .etiqueta {
+    @apply mb-1 block text-sm font-medium text-taupe;
+  }
+  .titulo-seccion {
+    @apply text-2xl font-bold tracking-tight;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  /* espacio para que el menú inferior no tape el contenido */
+  .con-menu {
+    padding-bottom: calc(var(--altura-menu) + env(safe-area-inset-bottom) + 1.5rem);
+  }
+}
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@media print {
+  body { background: white; }
+}
