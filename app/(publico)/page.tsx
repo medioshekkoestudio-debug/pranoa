@@ -36,13 +36,13 @@ export default async function Inicio() {
       </section>
 
       {/* tres accesos */}
-      <section className="mx-auto -mt-6 grid max-w-5xl gap-3 px-4 sm:grid-cols-3">
+      <section className="relative z-10 mx-auto mt-6 grid max-w-5xl gap-3 px-4 sm:grid-cols-3">
         {[
           { href: '/carta', t: 'Nuestra carta', d: 'Fotos, descripciones y alérgenos de cada plato.', c: 'bg-white' },
           { href: '/delivery', t: 'Delivery en Valencia', d: 'Pide desde casa: el envío se calcula según tu zona.', c: 'bg-naranja text-white' },
           { href: '/reservas', t: 'Reserva tu mesa', d: 'Salón principal o terraza, tú eliges.', c: 'bg-ciruela text-crema' },
         ].map((x) => (
-          <Link key={x.href} href={x.href} className={`rounded-2xl p-5 shadow-sm transition hover:-translate-y-0.5 ${x.c}`}>
+          <Link key={x.href} href={x.href} className={`rounded-2xl px-5 pb-5 pt-7 shadow-sm transition hover:-translate-y-0.5 ${x.c}`}>
             <p className="text-lg font-bold">{x.t}</p>
             <p className="mt-1 text-sm opacity-80">{x.d}</p>
           </Link>
