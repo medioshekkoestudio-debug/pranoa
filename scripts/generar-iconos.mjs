@@ -1,37 +1,40 @@
-// Genera los íconos de la app a partir del isotipo provisional.
-// Cuando llegue el logo oficial: guardar public/marca/isotipo.svg (blanco) y volver a correr `npm run iconos`.
+// Genera los íconos de la app y el isotipo de la web a partir del favicon oficial
+// (public/marca/favicon-original.png: hoja blanca sobre cuadro oliva). Correr con `npm run iconos`.
 import sharp from 'sharp';
-import { mkdirSync, existsSync, readFileSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 
-const OLIVA = '#65663B';
-const salida = 'public/iconos';
-mkdirSync(salida, { recursive: true });
+const OLIVA = { r: 0x65, g: 0x66, b: 0x3b, alpha: 1 };
+const ORIGEN = 'public/marca/favicon-original.png';
+mkdirSync('public/iconos', { recursive: true });
 
-const isotipoProvisional = (color) => `
-  <g fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M38 72 C29 46 37 19 62 12 C81 7 92 20 84 37 C75 57 58 66 38 72 Z" stroke-width="9"/>
-    <path d="M43 65 L73 22" stroke-width="3.2"/><path d="M50 55 L50 38" stroke-width="3"/>
-    <path d="M57 45 L72 42" stroke-width="3"/><path d="M64 35 L63 25" stroke-width="3"/>
-    <path d="M38 72 C40 82 42 90 47 100" stroke-width="9"/><path d="M21 77 C29 72 38 71 52 67" stroke-width="7"/>
-  </g>`;
-
-const oficial = existsSync('public/marca/isotipo.svg') ? readFileSync('public/marca/isotipo.svg', 'utf8') : null;
-
-function svg(tam, margen) {
-  const interior = tam - margen * 2;
-  const dibujo = oficial
-    ? `<image href="data:image/svg+xml;base64,${Buffer.from(oficial).toString('base64')}" x="${margen}" y="${margen}" width="${interior}" height="${interior}"/>`
-    : `<g transform="translate(${margen + interior * 0.04} ${margen}) scale(${interior / 110})">${isotipoProvisional('#FFFFFF')}</g>`;
-  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${tam}" height="${tam}"><rect width="100%" height="100%" fill="${OLIVA}"/>${dibujo}</svg>`);
+// 1) Separar la hoja blanca: el brillo de cada píxel se vuelve su transparencia.
+const { data, info } = await sharp(ORIGEN).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+const hoja = Buffer.alloc(info.width * info.height * 4);
+for (let i = 0; i < info.width * info.height; i++) {
+  const [r, g, b, a] = [data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]];
+  const luz = 0.299 * r + 0.587 * g + 0.114 * b;
+  const alfa = Math.max(0, Math.min(1, (luz - 110) / 130)) * (a / 255);
+  hoja.set([255, 255, 255, Math.round(alfa * 255)], i * 4);
 }
+const hojaPng = await sharp(hoja, { raw: { width: info.width, height: info.height, channels: 4 } }).png().trim().toBuffer();
+await sharp(hojaPng).toFile('public/marca/isotipo.png');
+console.log('listo marca/isotipo.png');
 
-const lista = [
-  ['icono-192.png', 192, 30],
-  ['icono-512.png', 512, 80],
-  ['icono-maskable-512.png', 512, 120],
-  ['apple-touch-icon.png', 180, 28],
-];
-for (const [nombre, tam, margen] of lista) {
-  await sharp(svg(tam, margen)).png().toFile(`${salida}/${nombre}`);
+// 2) Íconos: hoja centrada sobre fondo oliva cuadrado (el sistema redondea las esquinas).
+async function icono(nombre, tam, proporcion) {
+  const lado = Math.round(tam * proporcion);
+  const dibujo = await sharp(hojaPng).resize(lado, lado, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).toBuffer();
+  await sharp({ create: { width: tam, height: tam, channels: 4, background: OLIVA } })
+    .composite([{ input: dibujo, gravity: 'center' }]).png().toFile(`public/iconos/${nombre}`);
   console.log('listo', nombre);
+}
+await icono('icono-192.png', 192, 0.74);
+await icono('icono-512.png', 512, 0.74);
+await icono('icono-maskable-512.png', 512, 0.58);
+await icono('apple-touch-icon.png', 180, 0.72);
+
+// 3) Favicon de la pestaña: el original tal cual (cuadro redondeado).
+for (const t of [32, 64]) {
+  await sharp(ORIGEN).resize(t, t).png().toFile(`public/iconos/favicon-${t}.png`);
+  console.log(`listo favicon-${t}.png`);
 }

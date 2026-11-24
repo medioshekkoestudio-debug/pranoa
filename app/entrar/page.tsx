@@ -12,7 +12,7 @@ export default async function Entrar() {
   if (perfil) redirect(INICIO_ROL[perfil.rol]);
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-oliva px-5 py-10">
-      <Logo color="#F6EFE4" lema horizontal={false} />
+      <Logo color="#F6EFE4" grande />
       <div className="tarjeta mt-8 w-full max-w-sm p-6">
         <h1 className="text-xl font-bold">Acceso del personal</h1>
         <p className="mb-5 mt-1 text-sm text-taupe">Usa el usuario y la contraseña que te dio el administrador.</p>

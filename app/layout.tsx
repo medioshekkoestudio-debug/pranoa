@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: 'Restaurante en Valencia, Carabobo. Carta digital, delivery y reservas.',
   applicationName: 'Pranoa',
   appleWebApp: { capable: true, title: 'Pranoa', statusBarStyle: 'default' },
-  icons: { icon: '/iconos/icono-192.png', apple: '/iconos/apple-touch-icon.png' },
+  icons: { icon: [{ url: '/iconos/favicon-32.png', sizes: '32x32' }, { url: '/iconos/favicon-64.png', sizes: '64x64' }], apple: '/iconos/apple-touch-icon.png' },
 };
 
 export const viewport: Viewport = {
