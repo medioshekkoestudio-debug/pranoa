@@ -6,21 +6,17 @@ export function Isotipo({ className = 'h-10 w-10', color = 'currentColor' }: { c
   return <span aria-hidden="true" className={`inline-block ${className}`} style={{ backgroundColor: color, WebkitMask: mascara, mask: mascara }} />;
 }
 
+// Logo oficial completo (hoja + «pranoa» + «un refugio seguro»). Se pinta en cualquier color de marca
+// usando public/marca/logo-blanco.png como máscara. Las versiones a color están en public/marca/.
 export function Logo({
   className = '',
-  color = '#3C2525',
-  lema = false,
-  horizontal = true,
-}: { className?: string; color?: string; lema?: boolean; horizontal?: boolean }) {
+  color = '#65663B',
+  grande = false,
+}: { className?: string; color?: string; grande?: boolean }) {
+  const mascara = 'url(/marca/logo-blanco.png) center / contain no-repeat';
   return (
-    <span className={`inline-flex items-center gap-1.5 ${horizontal ? 'flex-row' : 'flex-col'} ${className}`} style={{ color }}>
-      <Isotipo className={horizontal ? 'h-9 w-9' : 'h-16 w-16'} />
-      <span className="flex flex-col leading-none">
-        <span className="font-extrabold lowercase tracking-wide" style={{ fontSize: horizontal ? '1.6rem' : '2.4rem' }}>
-          pranoa
-        </span>
-        {lema && <span className="mt-0.5 text-[0.62rem] font-semibold tracking-[0.18em] opacity-80">un refugio seguro</span>}
-      </span>
-    </span>
+    <span role="img" aria-label="Pranoa, un refugio seguro"
+      className={`inline-block aspect-[600/273] ${grande ? 'h-24' : 'h-11'} ${className}`}
+      style={{ backgroundColor: color, WebkitMask: mascara, mask: mascara }} />
   );
 }
