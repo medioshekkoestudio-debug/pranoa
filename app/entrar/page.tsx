@@ -15,7 +15,7 @@ export default async function Entrar() {
       <Logo color="#F6EFE4" lema horizontal={false} />
       <div className="tarjeta mt-8 w-full max-w-sm p-6">
         <h1 className="text-xl font-bold">Acceso del personal</h1>
-        <p className="mb-5 mt-1 text-sm text-taupe">Usa el correo y la contraseña que te dio el administrador.</p>
+        <p className="mb-5 mt-1 text-sm text-taupe">Usa el usuario y la contraseña que te dio el administrador.</p>
         <FormEntrar />
       </div>
     </main>

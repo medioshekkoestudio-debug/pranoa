@@ -43,7 +43,7 @@ export default function Personal() {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-semibold">{p.nombre} {p.id === yo.id && <span className="text-xs text-taupe">(tú)</span>}</p>
-                <p className="truncate text-sm text-taupe">{correos[p.id] || ''}{p.telefono ? ` · ${p.telefono}` : ''}</p>
+                <p className="truncate text-sm text-taupe">{correos[p.id] ? `Usuario: ${correos[p.id]}` : ''}{p.telefono ? ` · ${p.telefono}` : ''}</p>
               </div>
               <select className="rounded-full border border-ciruela/15 bg-white px-3 py-1.5 text-sm" value={p.rol} disabled={p.id === yo.id}
                 onChange={(e) => cambiar(p, { rol: e.target.value as Rol })}>
@@ -88,7 +88,7 @@ export default function Personal() {
 }
 
 function FormNuevo({ onListo }: { onListo: () => void }) {
-  const [f, setF] = useState({ nombre: '', correo: '', clave: '', rol: 'mesonero' as Rol, telefono: '' });
+  const [f, setF] = useState({ nombre: '', usuario: '', clave: '', rol: 'mesonero' as Rol, telefono: '' });
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   return (
@@ -102,7 +102,9 @@ function FormNuevo({ onListo }: { onListo: () => void }) {
       onListo();
     }}>
       <input className="campo" placeholder="Nombre" required value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} />
-      <input className="campo" type="email" placeholder="Correo" required value={f.correo} onChange={(e) => setF({ ...f, correo: e.target.value })} />
+      <input className="campo" placeholder="Usuario (ej. mesonero2_pranoa)" required autoCapitalize="none" autoCorrect="off" spellCheck={false}
+        pattern="[A-Za-z0-9._\-]{3,40}" title="Letras, números, punto, guion o guion bajo; sin espacios"
+        value={f.usuario} onChange={(e) => setF({ ...f, usuario: e.target.value.trim() })} />
       <input className="campo" placeholder="Teléfono (opcional)" value={f.telefono} onChange={(e) => setF({ ...f, telefono: e.target.value })} />
       <input className="campo" placeholder="Contraseña (mín. 8)" required minLength={8} value={f.clave} onChange={(e) => setF({ ...f, clave: e.target.value })} />
       <select className="campo" value={f.rol} onChange={(e) => setF({ ...f, rol: e.target.value as Rol })}>

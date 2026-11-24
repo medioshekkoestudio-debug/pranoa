@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { perfilActual, supabaseServicio } from '@/lib/supabase/servidor';
 import type { Rol } from '@/lib/permisos';
+import { correoAUsuario, usuarioACorreo, usuarioValido } from '@/lib/usuario';
 
 const ROLES: Rol[] = ['admin', 'cajero', 'mesonero', 'cocina', 'motorizado'];
 
@@ -13,14 +14,15 @@ async function soloAdmin() {
 
 export async function POST(req: Request) {
   if (!(await soloAdmin())) return NextResponse.json({ error: 'Sin permiso' }, { status: 403 });
-  const { nombre, correo, clave, rol, telefono } = await req.json();
-  if (!nombre?.trim() || !correo?.trim() || !ROLES.includes(rol)) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
+  const { nombre, usuario, clave, rol, telefono } = await req.json();
+  if (!nombre?.trim() || !usuario?.trim() || !ROLES.includes(rol)) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
+  if (!usuarioValido(usuario)) return NextResponse.json({ error: 'El usuario solo puede tener letras, números, punto, guion y guion bajo (sin espacios)' }, { status: 400 });
   if (!clave || String(clave).length < 8) return NextResponse.json({ error: 'La contraseña debe tener al menos 8 caracteres' }, { status: 400 });
 
   const sb = supabaseServicio();
-  const { data, error } = await sb.auth.admin.createUser({ email: correo.trim().toLowerCase(), password: clave, email_confirm: true });
+  const { data, error } = await sb.auth.admin.createUser({ email: usuarioACorreo(usuario), password: clave, email_confirm: true });
   if (error || !data.user) {
-    const msg = error?.message?.includes('already') ? 'Ya existe una cuenta con ese correo' : error?.message || 'No se pudo crear';
+    const msg = error?.message?.includes('already') ? 'Ya existe ese usuario' : error?.message || 'No se pudo crear';
     return NextResponse.json({ error: msg }, { status: 400 });
   }
   const { error: e2 } = await sb.from('perfiles').insert({ id: data.user.id, nombre: nombre.trim(), rol, telefono: telefono?.trim() || null });
@@ -45,5 +47,5 @@ export async function GET() {
   // correos de las cuentas (no están en perfiles)
   const { data, error } = await supabaseServicio().auth.admin.listUsers({ perPage: 1000 });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json(Object.fromEntries(data.users.map((u) => [u.id, u.email])));
+  return NextResponse.json(Object.fromEntries(data.users.map((u) => [u.id, correoAUsuario(u.email)])));
 }

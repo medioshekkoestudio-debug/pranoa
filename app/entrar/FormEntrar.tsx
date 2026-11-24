@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { supabaseNavegador } from '@/lib/supabase/cliente';
+import { usuarioACorreo } from '@/lib/usuario';
 
 export function FormEntrar() {
   const [correo, setCorreo] = useState('');
@@ -13,9 +14,9 @@ export function FormEntrar() {
     setError('');
     setCargando(true);
     const sb = supabaseNavegador();
-    const { error } = await sb.auth.signInWithPassword({ email: correo.trim(), password: clave });
+    const { error } = await sb.auth.signInWithPassword({ email: usuarioACorreo(correo), password: clave });
     if (error) {
-      setError(error.message.includes('Invalid') ? 'Correo o contraseña incorrectos.' : error.message);
+      setError(error.message.includes('Invalid') ? 'Usuario o contraseña incorrectos.' : error.message);
       setCargando(false);
       return;
     }
@@ -26,8 +27,9 @@ export function FormEntrar() {
   return (
     <form onSubmit={entrar} className="space-y-3">
       <div>
-        <label className="etiqueta" htmlFor="correo">Correo</label>
-        <input id="correo" type="email" className="campo" required autoComplete="email" value={correo} onChange={(e) => setCorreo(e.target.value)} />
+        <label className="etiqueta" htmlFor="correo">Usuario</label>
+        <input id="correo" type="text" className="campo" required autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+          placeholder="ej. mesonero1_pranoa" value={correo} onChange={(e) => setCorreo(e.target.value)} />
       </div>
       <div>
         <label className="etiqueta" htmlFor="clave">Contraseña</label>
