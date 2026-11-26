@@ -6,6 +6,7 @@ import { INICIO_ROL, menuDe, puedeEntrar, seccionDe } from '@/lib/permisos';
 import type { Perfil } from '@/lib/tipos';
 import { supabaseNavegador } from '@/lib/supabase/cliente';
 import { notificar, sonar, useTiempoReal } from '@/lib/tiempoReal';
+import { ContextoPerfilCabecera } from '@/components/CabeceraPanel';
 
 const ContextoPerfil = createContext<Perfil | null>(null);
 export const usePerfil = () => useContext(ContextoPerfil)!;
@@ -94,8 +95,10 @@ export function MarcoPanel({ perfil, children }: { perfil: Perfil; children: Rea
 
   return (
     <ContextoPerfil.Provider value={perfil}>
-      <div className={`con-menu min-h-screen ${oscuro ? 'bg-ciruela-oscuro text-crema' : ''}`}>{children}</div>
-      <MenuInferior botones={botones} oscuro={oscuro} />
+      <ContextoPerfilCabecera.Provider value={perfil}>
+        <div className={`con-menu min-h-screen ${oscuro ? 'bg-ciruela-oscuro text-crema' : ''}`}>{children}</div>
+        <MenuInferior botones={botones} oscuro={oscuro} />
+      </ContextoPerfilCabecera.Provider>
     </ContextoPerfil.Provider>
   );
 }
