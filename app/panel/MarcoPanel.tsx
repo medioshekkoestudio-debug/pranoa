@@ -56,9 +56,8 @@ export function MarcoPanel({ perfil, children }: { perfil: Perfil; children: Rea
   const recontar = useCallback(async () => setContadores(await contar(perfil)), [perfil]);
 
   // alertas con sonido y notificación según el perfil
-  useTiempoReal(['pedidos', 'llamadas', 'reservas'], (c) => {
-    recontar();
-    if (!c) return;
+  // los contadores se recalculan agrupando ráfagas; los avisos se revisan evento por evento
+  useTiempoReal(['pedidos', 'llamadas', 'reservas'], () => { recontar(); }, 30000, (c) => {
     const fila = (c.new || {}) as Record<string, unknown>;
     const r = perfil.rol;
     // Con RLS, Supabase no manda el registro anterior: se recuerda aquí el último estado visto
@@ -88,7 +87,7 @@ export function MarcoPanel({ perfil, children }: { perfil: Perfil; children: Rea
     if (c.table === 'reservas' && c.eventType === 'INSERT' && ['cajero', 'admin'].includes(r)) {
       notificar('Nueva reserva', `${fila.nombre ?? ''} · ${fila.personas ?? ''} personas`, '/panel/reservas');
     }
-  }, 30000);
+  });
 
   const oscuro = seccionDe(ruta)?.ruta === '/panel/cocina';
   const botones = menuDe(perfil.rol).map((s) => ({ href: s.ruta, titulo: s.titulo, icono: s.icono, aviso: contadores[s.ruta] }));

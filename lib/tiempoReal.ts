@@ -9,10 +9,16 @@ type Cambio = RealtimePostgresChangesPayload<Record<string, unknown>> & { table:
  * Escucha cambios de tablas por WebSocket (Supabase Realtime, respeta RLS)
  * y llama a `alCambiar` agrupando ráfagas en 300 ms. También recarga al volver a la pestaña
  * y cada `respaldoMs` por si se cortó la conexión del teléfono.
+ * `alEvento` recibe CADA cambio sin agrupar (para sonidos y avisos): al crear un pedido llegan
+ * dos eventos seguidos (INSERT y el UPDATE del subtotal) y la ráfaga solo conserva el último.
  */
-export function useTiempoReal(tablas: string[], alCambiar: (c?: Cambio) => void, respaldoMs = 60000) {
+export function useTiempoReal(
+  tablas: string[], alCambiar: (c?: Cambio) => void, respaldoMs = 60000, alEvento?: (c: Cambio) => void,
+) {
   const fn = useRef(alCambiar);
   fn.current = alCambiar;
+  const ev = useRef(alEvento);
+  ev.current = alEvento;
   const clave = tablas.join(',');
 
   useEffect(() => {
@@ -24,7 +30,11 @@ export function useTiempoReal(tablas: string[], alCambiar: (c?: Cambio) => void,
     };
     let canal = sb.channel(`rt-${clave}-${Math.random().toString(36).slice(2)}`);
     for (const t of clave.split(',')) {
-      canal = canal.on('postgres_changes', { event: '*', schema: 'public', table: t }, (p) => disparar({ ...p, table: t } as Cambio));
+      canal = canal.on('postgres_changes', { event: '*', schema: 'public', table: t }, (p) => {
+        const c = { ...p, table: t } as Cambio;
+        ev.current?.(c);
+        disparar(c);
+      });
     }
     canal.subscribe();
     fn.current(); // primera carga

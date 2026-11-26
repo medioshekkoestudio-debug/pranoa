@@ -1,6 +1,6 @@
 # Pranoa — Actualización del proyecto
 
-_Fecha: 24 de noviembre de 2026_
+_Fecha: 24 de noviembre de 2026 · revisado el 25 de noviembre de 2026_
 
 App web (PWA, se descarga al teléfono como una app) del restaurante **Pranoa · un refugio seguro**, Valencia, Carabobo.
 Hecha a partir de la propuesta técnica y el manual de marca. **Sin Firebase**: todo funciona con Supabase.
@@ -12,7 +12,7 @@ Hecha a partir de la propuesta técnica y el manual de marca. **Sin Firebase**: 
 | Qué | Dónde |
 |---|---|
 | Web publicada | https://pranoa.vercel.app |
-| Dominio propio | https://espaciopranoa.com (conectado en Vercel, esperando que termine de propagarse) |
+| Dominio propio | https://www.espaciopranoa.com (ya funciona; espaciopranoa.com redirige a www) |
 | Código | https://github.com/medioshekkoestudio-debug/pranoa |
 | Base de datos | Supabase, proyecto `cuhtkfgapzrgxgrmnqap` |
 | Hosting | Vercel, proyecto `hekkoweb/pranoa` |
@@ -65,7 +65,7 @@ Las contraseñas las tiene la administración. No se guardan en este archivo.
 - **Logo oficial completo** en la web y **favicon oficial** en la pestaña y en el ícono de la app.
   - Están en `public/marca/`.
   - Se regeneran con `npm run iconos`.
-  - _Revisado en local, falta publicarlo._
+  - Ya publicado en la web.
 
 ### Datos de ejemplo cargados
 5 categorías, 14 platos, 12 mesas (de la 13 en adelante, terraza), 6 zonas de delivery en Valencia, tasa de ejemplo 40.
@@ -75,12 +75,11 @@ Las contraseñas las tiene la administración. No se guardan en este archivo.
 ## 3. Lo que falta por hacer o definir
 
 ### Pendientes inmediatos
-- [ ] **Publicar los logos nuevos** (están listos en local).
-- [ ] **Dominio espaciopranoa.com**:
-  1. Cuando termine de propagar, cambiar `NEXT_PUBLIC_SITE_URL` a `https://espaciopranoa.com` en Vercel.
-  2. Volver a desplegar sin caché.
-  3. Comprobar que todo funciona.
-- [ ] **Reimprimir los QR de las mesas** desde *Panel → Mesas y QR*, una vez esté el dominio, para que apunten a espaciopranoa.com.
+- [x] **Publicar los logos nuevos** (ya están en la web).
+- [x] **Dominio espaciopranoa.com**: ya abre la web (25-nov).
+- [ ] Cambiar `NEXT_PUBLIC_SITE_URL` a `https://www.espaciopranoa.com` en Vercel y volver a desplegar
+  (solo afecta las vistas previas al compartir el enlace; la web ya funciona sin esto).
+- [ ] **Reimprimir los QR de las mesas** desde *Panel → Mesas y QR* **abierto dentro de www.espaciopranoa.com**: el QR toma el dominio desde donde se imprime.
 - [ ] **Borrar el token de Supabase** que se usó para la configuración: https://supabase.com/dashboard/account/tokens
 - [ ] **Cambiar las contraseñas** del personal, porque se compartieron por chat. Se hace desde *Panel → Personal → Nueva contraseña*.
 

@@ -18,13 +18,13 @@ export function FormPago({ cuentaId, pedidoId, sugerido, tasa, comensales = [], 
   const [enviando, setEnviando] = useState(false);
   const enBs = metodo === 'pago_movil' || metodo === 'efectivo_bs' || metodo === 'punto';
 
-  useEffect(() => { setMontoUsd(sugerido.toFixed(2)); }, [sugerido]);
+  // El monto se rellena solo al cambiar de puesto o cuando cambia lo que falta por cobrar.
+  // (Antes dependía de la lista `comensales`, que es nueva en cada recarga de la mesa: cada 30 s
+  // o con cualquier cambio en vivo borraba lo que la caja estaba escribiendo.)
+  const pendientePuesto = comensal === '' ? null : comensales.find((x) => x.n === comensal)?.pendiente ?? null;
   useEffect(() => {
-    if (comensal !== '') {
-      const c = comensales.find((x) => x.n === comensal);
-      if (c) setMontoUsd(c.pendiente.toFixed(2));
-    }
-  }, [comensal, comensales]);
+    setMontoUsd((pendientePuesto ?? sugerido).toFixed(2));
+  }, [comensal, pendientePuesto, sugerido]);
   useEffect(() => { if (enBs && tasa > 0) setMontoBs(aBs(Number(montoUsd) || 0, tasa).toFixed(2)); }, [montoUsd, tasa, enBs]);
 
   async function guardar(e: React.FormEvent) {

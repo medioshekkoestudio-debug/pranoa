@@ -20,13 +20,17 @@ la pantalla: aunque alguien manipule la app, la base rechaza lo que su perfil no
 
 ## Puesta en marcha
 
-1. **Supabase**: crear un proyecto nuevo (región más cercana: `us-east-1`).
-2. En el **SQL Editor** del proyecto Pranoa, correr en orden:
+1. **Supabase**: crear un proyecto nuevo (el de producción está en `us-west-2`; `us-east-1` queda más cerca de Venezuela).
+2. En el **SQL Editor** del proyecto Pranoa, correr **en orden, las cuatro**:
    - `supabase/migrations/0001_inicial.sql`
    - `supabase/migrations/0002_datos_ejemplo.sql` (carta, 12 mesas y zonas de Valencia de ejemplo)
+   - `supabase/migrations/0003_permisos_tablas.sql` (sin esta, la web no puede leer nada: los proyectos nuevos de Supabase no dan permisos de tabla por defecto)
+   - `supabase/migrations/0004_corregir_proteger_perfil.sql` (sin esta, un mesonero podría ponerse rol de administrador)
 3. **Authentication → Sign In / Providers → Email**: desactivar **«Allow new users to sign up»**.
    Las cuentas del personal las crea el administrador desde la app.
-4. **Primer administrador**: Authentication → Users → *Add user* (correo + contraseña, marcar *Auto confirm*).
+4. **Primer administrador**: el personal entra con **usuario**, no con correo; por dentro el usuario `admin_pranoa`
+   se guarda como `admin_pranoa@pranoa.local` (ver `lib/usuario.ts`).
+   Authentication → Users → *Add user* con ese correo interno + contraseña, marcar *Auto confirm*.
    Copiar su ID y en el SQL Editor:
    ```sql
    insert into perfiles (id, nombre, rol) values ('ID-DEL-USUARIO', 'Nombre del dueño', 'admin');
@@ -39,11 +43,17 @@ la pantalla: aunque alguien manipule la app, la base rechaza lo que su perfil no
 Importar el repositorio en Vercel y cargar las mismas 4 variables de `.env.example`
 (`NEXT_PUBLIC_SITE_URL` = el dominio final). `SUPABASE_SERVICE_ROLE_KEY` nunca lleva `NEXT_PUBLIC_`.
 
+Los **QR de las mesas** toman el dominio desde el que se abre *Panel → Mesas y QR* (no de la variable):
+imprimirlos estando dentro de `https://www.espaciopranoa.com`, no de `pranoa.vercel.app` ni de `localhost`.
+
+## Marca
+
+Logo y favicon oficiales en `public/marca/`. `components/Logo.tsx` los pinta en cualquier color de marca usando
+`logo-blanco.png` e `isotipo.png` como máscara. Los íconos de la app se regeneran con `npm run iconos`
+a partir de `public/marca/favicon-original.png`.
+
 ## Pendiente
 
-- **Logo oficial**: el isotipo actual es un dibujo provisional hecho a partir del manual. Guardar el SVG oficial
-  en blanco como `public/marca/isotipo.svg` y correr `npm run iconos` para regenerar los íconos de la app.
-  Para el logotipo «pranoa» (tipografía propia) reemplazar `components/Logo.tsx` con el SVG oficial.
 - **Fotos reales** de los platos (se suben desde Panel → Carta → tocar un plato).
 - **Datos reales** en Panel → Ajustes: WhatsApp, Instagram, dirección, Pago Móvil y Zelle.
 - **Avisos con la app cerrada** (push real): hoy los avisos suenan y notifican mientras la app está abierta o en
