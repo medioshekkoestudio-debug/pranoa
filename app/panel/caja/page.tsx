@@ -11,7 +11,7 @@ import type { Ajustes, Cuenta, Llamada, MetodoPago, Pago, Pedido } from '@/lib/t
 
 export default function Caja() {
   const [aj, setAj] = useState<Ajustes | null>(null);
-  const [cuentas, setCuentas] = useState<(Cuenta & { mesas: { numero: number } })[]>([]);
+  const [cuentas, setCuentas] = useState<(Cuenta & { mesas: { numero: number; nombre?: string } })[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [pagosCuentas, setPagosCuentas] = useState<Pago[]>([]);
   const [porVerificar, setPorVerificar] = useState<(Pago & { pedidos: { numero: number; cliente_nombre: string } | null })[]>([]);
@@ -23,13 +23,13 @@ export default function Caja() {
     const inicio = new Date(); inicio.setHours(0, 0, 0, 0);
     const [a, c, v, h, l] = await Promise.all([
       sb.from('ajustes').select('*').eq('id', 1).single(),
-      sb.from('cuentas').select('*, mesas(numero)').eq('abierta', true).order('abierta_at'),
+      sb.from('cuentas').select('*, mesas(numero, nombre)').eq('abierta', true).order('abierta_at'),
       sb.from('pagos').select('*, pedidos(numero, cliente_nombre)').eq('verificado', false).order('created_at'),
       sb.from('pagos').select('*').eq('verificado', true).gte('created_at', inicio.toISOString()).order('created_at', { ascending: false }),
       sb.from('llamadas').select('*').eq('atendida', false).eq('tipo', 'cuenta'),
     ]);
     setAj(a.data as Ajustes);
-    const cs = (c.data || []) as (Cuenta & { mesas: { numero: number } })[];
+    const cs = (c.data || []) as (Cuenta & { mesas: { numero: number; nombre?: string } })[];
     setCuentas(cs);
     setPorVerificar((v.data || []) as never);
     setHoy((h.data || []) as Pago[]);
@@ -92,7 +92,7 @@ export default function Caja() {
               return (
                 <Link key={c.id} href={`/panel/mesas/${c.mesa_id}`}
                   className={`flex items-center justify-between border-t border-ciruela/10 py-2.5 first:border-0 ${pide ? 'font-semibold text-red-600' : ''}`}>
-                  <span>Mesa {c.mesas?.numero} {pide && '· pide la cuenta'} <span className="text-xs font-normal text-taupe">· {minutosDesde(c.abierta_at)} min</span></span>
+                  <span>Mesa {c.mesas?.nombre || c.mesas?.numero} {pide && '· pide la cuenta'} <span className="text-xs font-normal text-taupe">· {minutosDesde(c.abierta_at)} min</span></span>
                   <span className="text-right">{usd(t)}{pg > 0 && <span className="block text-xs text-emerald-700">pagado {usd(pg)}</span>}</span>
                 </Link>
               );

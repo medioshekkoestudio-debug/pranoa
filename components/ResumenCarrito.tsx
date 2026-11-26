@@ -4,12 +4,13 @@ import { aBs, bs, usd } from '@/lib/formato';
 
 /** Lista editable de lo que se va a pedir */
 export function ResumenCarrito({
-  items, cambiar, tasa, conComensal = false,
+  items, cambiar, tasa, conComensal = false, maxComensales = 12,
 }: {
   items: ItemCarrito[];
   cambiar: (i: number, c: Partial<ItemCarrito>) => void;
   tasa: number;
   conComensal?: boolean;
+  maxComensales?: number;
 }) {
   if (!items.length) return <p className="py-6 text-center text-taupe">Aún no has agregado platos.</p>;
   const total = items.reduce((s, x) => s + x.precio_usd * x.cantidad, 0);
@@ -43,7 +44,7 @@ export function ResumenCarrito({
                 onChange={(e) => cambiar(i, { comensal: Number(e.target.value) })}
                 aria-label="Comensal"
               >
-                {Array.from({ length: 12 }, (_, n) => n + 1).map((n) => <option key={n} value={n}>Puesto {n}</option>)}
+                {Array.from({ length: Math.max(maxComensales, 1) }, (_, n) => n + 1).map((n) => <option key={n} value={n}>Puesto {n}</option>)}
               </select>
             )}
           </div>

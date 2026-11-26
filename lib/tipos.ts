@@ -17,7 +17,7 @@ export interface Producto {
   costo_usd?: number | null; foto_url: string | null; alergenos: string[]; disponible: boolean;
   activo?: boolean; solo_salon: boolean; orden: number;
 }
-export interface Mesa { id: string; numero: number; ambiente: 'salon' | 'terraza'; capacidad: number; token: string; activa: boolean }
+export interface Mesa { id: string; nombre: string; numero: number; ambiente: 'salon' | 'terraza'; capacidad: number; token: string; activa: boolean }
 export interface Cuenta { id: string; mesa_id: string; abierta: boolean; mesonero_id: string | null; abierta_at: string }
 export interface Zona { id: string; nombre: string; tarifa_usd: number; activa: boolean; orden: number }
 export interface PedidoItem {

@@ -82,7 +82,7 @@ export default function DetalleMesa() {
 
   return (
     <>
-      <CabeceraPanel titulo={`Mesa ${mesa.numero}`}>
+      <CabeceraPanel titulo={`Mesa ${mesa.nombre || mesa.numero}`}>
         <span className={`chip py-1 ${ESTILO_MESA[e].fondo} ${ESTILO_MESA[e].texto}`}>{ESTILO_MESA[e].nombre}</span>
       </CabeceraPanel>
       <main className="mx-auto max-w-3xl space-y-4 px-4 pt-4">
@@ -167,7 +167,7 @@ export default function DetalleMesa() {
                         <span>{usd(i.precio_usd * i.cantidad)}</span>
                         <select className="rounded-lg border border-ciruela/15 bg-white px-2 py-1" value={i.comensal}
                           onChange={(ev) => hacer(rpc('asignar_comensal', { p_item: i.id, p_comensal: Number(ev.target.value) })).then(cargar)}>
-                          {Array.from({ length: 12 }, (_, k) => k + 1).map((k) => <option key={k} value={k}>P{k}</option>)}
+                          {Array.from({ length: Math.max(mesa.capacidad || 6, ...puestos, 1) + 2 }, (_, k) => k + 1).map((k) => <option key={k} value={k}>P{k}</option>)}
                         </select>
                       </div>
                     ))}
@@ -213,8 +213,8 @@ export default function DetalleMesa() {
         )}
       </main>
 
-      <Hoja abierta={hoja === 'pedido'} onCerrar={() => setHoja('')} titulo={`Pedido · Mesa ${mesa.numero}`}>
-        <TomarPedido mesaId={mesa.id} tasa={tasa} onListo={() => { setHoja(''); cargar(); }} />
+      <Hoja abierta={hoja === 'pedido'} onCerrar={() => setHoja('')} titulo={`Pedido · Mesa ${mesa.nombre || mesa.numero}`}>
+        <TomarPedido mesaId={mesa.id} capacidad={mesa.capacidad} tasa={tasa} onListo={() => { setHoja(''); cargar(); }} />
       </Hoja>
 
       <Hoja abierta={hoja === 'mover'} onCerrar={() => setHoja('')} titulo="Mover a otra mesa">
@@ -225,7 +225,7 @@ export default function DetalleMesa() {
                 onClick={async () => {
                   if (cuenta && (await hacer(rpc('mover_cuenta', { p_cuenta: cuenta.id, p_mesa_destino: m.id })))) window.location.href = `/panel/mesas/${m.id}`;
                 }}>
-                {m.numero}
+                {m.nombre || m.numero}
               </button>
             ))}
           </div>

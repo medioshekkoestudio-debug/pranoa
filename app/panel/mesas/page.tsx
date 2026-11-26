@@ -27,7 +27,7 @@ export default function Mesas() {
     const p = ids.length
       ? await sb.from('pedidos').select('*, pedido_items(*)').in('cuenta_id', ids).order('created_at')
       : { data: [] };
-    setMesas((m.data || []) as Mesa[]);
+    setMesas(((m.data || []) as Mesa[]).sort((a, b) => (a.nombre || String(a.numero)).localeCompare(b.nombre || String(b.numero), 'es', { numeric: true })));
     setCuentas((c.data || []) as Cuenta[]);
     setLlamadas((l.data || []) as Llamada[]);
     setPedidos((p.data || []) as Pedido[]);
@@ -36,7 +36,10 @@ export default function Mesas() {
 
   useTiempoReal(['pedidos', 'llamadas', 'cuentas'], cargar, 30000);
 
-  const numeroMesa = (id: string | null) => mesas.find((m) => m.id === id)?.numero ?? '?';
+  const numeroMesa = (id: string | null) => {
+    const m = mesas.find((x) => x.id === id);
+    return m ? (m.nombre || String(m.numero)) : '?';
+  };
   const porAprobar = pedidos.filter((p) => p.estado === 'por_aprobar');
   const listos = pedidos.filter((p) => p.estado === 'listo');
   const conteo = (e: EstadoMesa) => mesas.filter((m) => estadoMesa(m.id, cuentas, pedidos, llamadas) === e).length;
@@ -126,9 +129,10 @@ export default function Mesas() {
                   return (
                     <Link key={m.id} href={`/panel/mesas/${m.id}`}
                       className={`flex aspect-square flex-col items-center justify-center rounded-2xl shadow-sm transition active:scale-95 ${ESTILO_MESA[e].fondo} ${ESTILO_MESA[e].texto}`}>
-                      <span className="text-3xl font-bold">{m.numero}</span>
+                      <span className="text-2xl sm:text-3xl font-bold">{m.nombre || m.numero}</span>
                       <span className="text-xs font-semibold">{ESTILO_MESA[e].nombre}</span>
-                      {cuenta && <span className="mt-0.5 text-xs opacity-90">${total.toFixed(2)} · {minutosDesde(cuenta.abierta_at)}′</span>}
+                      <span className="text-[0.65rem] opacity-80">{m.capacidad} puestos</span>
+                      {cuenta && <span className="mt-0.5 text-xs font-semibold opacity-95">${total.toFixed(2)} · {minutosDesde(cuenta.abierta_at)}′</span>}
                     </Link>
                   );
                 })}

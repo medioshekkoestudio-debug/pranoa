@@ -15,7 +15,7 @@ export default async function PaginaMesa({ params }: { params: { token: string }
   return (
     <MesaQr
       token={params.token}
-      numero={mesa.numero}
+      nombre={mesa.nombre || String(mesa.numero)}
       categorias={categorias}
       productosIniciales={productos}
       tasa={Number(ajustes.tasa_bs)}

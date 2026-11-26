@@ -15,7 +15,7 @@ const COLUMNAS: { estado: EstadoPedido; titulo: string; siguiente: EstadoPedido;
 
 export default function Cocina() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [mesas, setMesas] = useState<Record<string, number>>({});
+  const [mesas, setMesas] = useState<Record<string, string>>({});
   const [alerta, setAlerta] = useState(15);
   const [ahora, setAhora] = useState(Date.now());
   const [columna, setColumna] = useState(0); // en teléfono se ve una columna a la vez
@@ -23,13 +23,13 @@ export default function Cocina() {
   const cargar = useCallback(async () => {
     const sb = supabaseNavegador();
     const desde = new Date(Date.now() - 12 * 3600e3).toISOString();
-    const [p, m, a] = await Promise.all([
+    const [pedidos, mesas, a] = await Promise.all([
       sb.from('pedidos').select('*, pedido_items(*)').in('estado', ['nuevo', 'preparando', 'listo']).gte('created_at', desde).order('aprobado_at', { ascending: true }),
-      sb.from('mesas').select('id, numero'),
+      sb.from('mesas').select('id, nombre, numero'),
       sb.from('ajustes').select('alerta_minutos').eq('id', 1).single(),
     ]);
-    setPedidos((p.data || []) as Pedido[]);
-    setMesas(Object.fromEntries(((m.data || []) as Mesa[]).map((x) => [x.id, x.numero])));
+    setPedidos((pedidos.data || []) as Pedido[]);
+    setMesas(Object.fromEntries(((mesas.data || []) as Mesa[]).map((x) => [x.id, x.nombre || String(x.numero)])));
     setAlerta(a.data?.alerta_minutos || 15);
   }, []);
 

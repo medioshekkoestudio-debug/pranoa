@@ -13,8 +13,8 @@ import type { Categoria, EstadoPedido, Producto } from '@/lib/tipos';
 
 interface PedidoMesa { numero: number; estado: EstadoPedido; subtotal_usd: number; created_at: string; items: { nombre: string; cantidad: number }[] }
 
-export function MesaQr({ token, numero, categorias, productosIniciales, tasa, requiereAprobacion }: {
-  token: string; numero: number; categorias: Categoria[]; productosIniciales: Producto[]; tasa: number; requiereAprobacion: boolean;
+export function MesaQr({ token, nombre, categorias, productosIniciales, tasa, requiereAprobacion }: {
+  token: string; nombre: string; categorias: Categoria[]; productosIniciales: Producto[]; tasa: number; requiereAprobacion: boolean;
 }) {
   const productos = useProductosVivos(productosIniciales);
   const carrito = useCarrito(`pranoa-carrito-mesa-${token}`);
@@ -63,7 +63,7 @@ export function MesaQr({ token, numero, categorias, productosIniciales, tasa, re
     <div className="con-menu">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-4 pt-4">
         <Logo />
-        <span className="chip bg-oliva px-3 py-1.5 text-sm text-white">Mesa {numero}</span>
+        <span className="chip bg-oliva px-3 py-1.5 text-sm text-white">Mesa {nombre}</span>
       </header>
       <div className="mx-auto max-w-5xl px-4">
         <CartaInteractiva categorias={categorias} productos={productos} tasa={tasa} onAgregar={(p) => carrito.agregar(p)} cantidadDe={carrito.cantidadDe} />
@@ -83,7 +83,7 @@ export function MesaQr({ token, numero, categorias, productosIniciales, tasa, re
         </div>
       )}
 
-      <Hoja abierta={hoja === 'carrito'} onCerrar={() => setHoja('')} titulo={`Tu pedido · Mesa ${numero}`}>
+      <Hoja abierta={hoja === 'carrito'} onCerrar={() => setHoja('')} titulo={`Tu pedido · Mesa ${nombre}`}>
         <ResumenCarrito items={carrito.items} cambiar={carrito.cambiar} tasa={tasa} />
         {carrito.unidades > 0 && (
           <>

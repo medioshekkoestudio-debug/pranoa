@@ -9,14 +9,17 @@ import { usd } from '@/lib/formato';
 import type { Categoria, Producto } from '@/lib/tipos';
 
 /** Comandera: el mesonero arma el pedido por puesto y lo manda directo a cocina */
-export function TomarPedido({ mesaId, tasa, onListo }: { mesaId: string; tasa: number; onListo: () => void }) {
+export function TomarPedido({ mesaId, capacidad = 6, tasa, onListo }: { mesaId: string; capacidad?: number; tasa: number; onListo: () => void }) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [puesto, setPuesto] = useState(1);
+  const [maxPuestos, setMaxPuestos] = useState(Math.max(1, capacidad));
   const [verCarrito, setVerCarrito] = useState(false);
   const [notas, setNotas] = useState('');
   const [enviando, setEnviando] = useState(false);
   const carrito = useCarrito('comandera', false);
+
+  useEffect(() => { setMaxPuestos((prev) => Math.max(prev, Math.max(1, capacidad))); }, [capacidad]);
 
   useEffect(() => {
     const sb = supabaseNavegador();
@@ -38,7 +41,7 @@ export function TomarPedido({ mesaId, tasa, onListo }: { mesaId: string; tasa: n
   if (verCarrito) {
     return (
       <div>
-        <ResumenCarrito items={carrito.items} cambiar={carrito.cambiar} tasa={tasa} conComensal />
+        <ResumenCarrito items={carrito.items} cambiar={carrito.cambiar} tasa={tasa} conComensal maxComensales={maxPuestos} />
         <input className="campo mt-3" placeholder="Nota general para cocina" value={notas} onChange={(e) => setNotas(e.target.value)} />
         <div className="mt-4 flex gap-2">
           <button className="btn-secundario" onClick={() => setVerCarrito(false)}>Seguir agregando</button>
@@ -53,10 +56,20 @@ export function TomarPedido({ mesaId, tasa, onListo }: { mesaId: string; tasa: n
       <div className="mb-1 flex items-center gap-2 text-sm">
         <span className="text-taupe">Agregando al puesto:</span>
         <div className="no-scrollbar flex gap-1 overflow-x-auto">
-          {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
+          {Array.from({ length: maxPuestos }, (_, i) => i + 1).map((n) => (
             <button key={n} type="button" onClick={() => setPuesto(n)}
               className={`h-8 w-8 shrink-0 rounded-full text-sm font-bold ${puesto === n ? 'bg-naranja text-white' : 'bg-crema'}`}>{n}</button>
           ))}
+          {maxPuestos < 30 && (
+            <button
+              type="button"
+              onClick={() => { const sig = maxPuestos + 1; setMaxPuestos(sig); setPuesto(sig); }}
+              className="h-8 shrink-0 rounded-full border border-dashed border-oliva/50 px-2.5 text-xs font-bold text-oliva"
+              title="Agregar puesto adicional"
+            >
+              + Puesto
+            </button>
+          )}
         </div>
       </div>
       <CartaInteractiva categorias={categorias} productos={productos} tasa={tasa} compacta
