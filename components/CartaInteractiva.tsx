@@ -36,7 +36,7 @@ export function CartaInteractiva({ categorias, productos, tasa, onAgregar, canti
   return (
     <div>
       {/* barra de categorías fija */}
-      <div className="sticky top-0 z-20 -mx-4 bg-crema/95 px-4 pb-2 pt-3 backdrop-blur">
+      <div className="sticky top-0 z-20 -mx-4 bg-taupe-suave/95 px-4 pb-2 pt-3 backdrop-blur">
         <div className="flex gap-2">
           <input className="campo py-2" placeholder="Buscar un plato…" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
           <button

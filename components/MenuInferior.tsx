@@ -12,48 +12,49 @@ export interface BotonMenu {
   onClick?: () => void;
 }
 
-/** Barra inferior fija estilo app. Respeta el área segura del iPhone. */
+/** Barra inferior fija estilo app, con los colores oficiales de Pranoa (fondo oliva e iconos blancos). */
 export function MenuInferior({ botones, oscuro = false }: { botones: BotonMenu[]; oscuro?: boolean }) {
   const ruta = usePathname();
   return (
     <nav
-      className={`fixed inset-x-0 bottom-0 z-40 border-t backdrop-blur print:hidden ${
-        oscuro ? 'border-white/10 bg-ciruela-oscuro/95 text-crema' : 'border-ciruela/10 bg-white/95 text-ciruela'
+      className={`fixed inset-x-0 bottom-0 z-40 border-t shadow-[0_-4px_16px_rgba(60,37,37,0.12)] print:hidden ${
+        oscuro
+          ? 'border-white/10 bg-ciruela-oscuro/98 text-crema'
+          : 'border-oliva-oscuro/30 bg-oliva text-white'
       }`}
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="mx-auto flex max-w-3xl">
+      <ul className="mx-auto flex max-w-4xl">
         {botones.map((b) => {
           const activo = ruta === b.href || (b.href !== '/' && ruta.startsWith(b.href + '/'));
           const contenido = (
             <>
-              {/* Indicador activo: barra superior con color de marca */}
               {activo && (
                 <span
-                  className={`absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full ${
-                    oscuro ? 'bg-naranja' : 'bg-oliva'
+                  className={`absolute left-1/2 top-0 h-1 w-10 -translate-x-1/2 rounded-b-full ${
+                    oscuro ? 'bg-naranja' : 'bg-naranja-claro'
                   }`}
                 />
               )}
               <span className="relative">
                 <Icono nombre={b.icono} className="h-6 w-6" />
                 {!!b.aviso && (
-                  <span className="absolute -right-2.5 -top-1.5 min-w-[1.15rem] rounded-full bg-naranja px-1 text-center text-[0.65rem] font-bold leading-[1.15rem] text-white">
+                  <span className="absolute -right-2.5 -top-1.5 min-w-[1.15rem] rounded-full bg-naranja px-1 text-center text-[0.65rem] font-bold leading-[1.15rem] text-white ring-2 ring-oliva">
                     {b.aviso > 99 ? '99+' : b.aviso}
                   </span>
                 )}
               </span>
-              <span className={`text-[0.68rem] font-semibold ${activo ? '' : 'font-medium'}`}>{b.titulo}</span>
+              <span className={`text-[0.7rem] ${activo ? 'font-bold' : 'font-medium'}`}>{b.titulo}</span>
             </>
           );
           const clase = `relative flex h-16 w-full flex-col items-center justify-center gap-0.5 transition-all ${
             activo
               ? oscuro
-                ? 'text-naranja'
-                : 'text-oliva'
+                ? 'bg-white/5 text-naranja'
+                : 'bg-oliva-oscuro/45 text-white'
               : oscuro
-                ? 'text-crema/60 hover:text-crema/90'
-                : 'text-ciruela/50 hover:text-ciruela/80'
+                ? 'text-crema/65 hover:text-crema'
+                : 'text-white/80 hover:bg-oliva-oscuro/25 hover:text-white'
           }`;
           return (
             <li key={b.href + b.titulo} className="flex-1">

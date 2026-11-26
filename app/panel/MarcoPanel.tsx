@@ -96,7 +96,7 @@ export function MarcoPanel({ perfil, children }: { perfil: Perfil; children: Rea
   return (
     <ContextoPerfil.Provider value={perfil}>
       <ContextoPerfilCabecera.Provider value={perfil}>
-        <div className={`con-menu min-h-screen ${oscuro ? 'bg-ciruela-oscuro text-crema' : ''}`}>{children}</div>
+        <div className={`con-menu min-h-screen ${oscuro ? 'bg-ciruela-oscuro text-crema' : 'bg-taupe-suave text-ciruela'}`}>{children}</div>
         <MenuInferior botones={botones} oscuro={oscuro} />
       </ContextoPerfilCabecera.Provider>
     </ContextoPerfil.Provider>
