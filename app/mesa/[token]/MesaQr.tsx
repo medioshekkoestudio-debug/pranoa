@@ -66,7 +66,7 @@ export function MesaQr({ token, nombre, categorias, productosIniciales, tasa, re
         <span className="chip bg-oliva px-3 py-1.5 text-sm text-white">Mesa {nombre}</span>
       </header>
       <div className="mx-auto max-w-5xl px-4">
-        <CartaInteractiva categorias={categorias} productos={productos} tasa={tasa} onAgregar={(p) => carrito.agregar(p)} cantidadDe={carrito.cantidadDe} />
+        <CartaInteractiva categorias={categorias} productos={productos} tasa={tasa} onAgregar={(p) => carrito.agregar(p)} onQuitar={(p) => carrito.quitar(p.id)} cantidadDe={carrito.cantidadDe} />
       </div>
 
       {carrito.unidades > 0 && (

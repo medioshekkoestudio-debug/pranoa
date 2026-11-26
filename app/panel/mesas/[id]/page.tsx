@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { CabeceraPanel } from '@/components/CabeceraPanel';
@@ -29,6 +29,13 @@ export default function DetalleMesa() {
   const [tasa, setTasa] = useState(0);
   const [pestana, setPestana] = useState<Pestana>('pedidos');
   const [hoja, setHoja] = useState<'' | 'pedido' | 'mover'>('');
+  const [pedidoEditar, setPedidoEditar] = useState<Pedido | null>(null);
+  const [ahora, setAhora] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setAhora(Date.now()), 15000);
+    return () => clearInterval(t);
+  }, []);
 
   const cargar = useCallback(async () => {
     const sb = supabaseNavegador();
@@ -94,19 +101,19 @@ export default function DetalleMesa() {
             <p className="text-sm text-taupe">{mesa.ambiente === 'salon' ? 'Salón' : 'Terraza'} · {mesa.capacidad} puestos</p>
             <div className="mt-4 flex justify-center gap-2">
               <button className="btn-secundario" onClick={() => hacer(rpc('abrir_mesa', { p_mesa: mesa.id })).then(cargar)}>Sentar clientes</button>
-              <button className="btn-primario" onClick={() => setHoja('pedido')}>Tomar pedido</button>
+              <button className="btn-primario" onClick={() => { setPedidoEditar(null); setHoja('pedido'); }}>Tomar pedido</button>
             </div>
           </div>
         ) : (
           <>
             <div className="tarjeta flex items-center justify-between">
               <div>
-                <p className="text-sm text-taupe">Abierta hace {minutosDesde(cuenta.abierta_at)} min</p>
+                <p className="text-sm text-taupe">Abierta hace {minutosDesde(cuenta.abierta_at, ahora)} min</p>
                 <p className="text-2xl font-bold">{usd(total)}</p>
                 {tasa > 0 && <p className="text-sm text-taupe">{bs(aBs(total, tasa))}</p>}
               </div>
               <div className="flex flex-col gap-2">
-                <button className="btn-primario py-2" onClick={() => setHoja('pedido')}>+ Pedido</button>
+                <button className="btn-primario py-2" onClick={() => { setPedidoEditar(null); setHoja('pedido'); }}>+ Pedido</button>
                 <button className="btn-chico bg-crema" onClick={abrirMover}>Cambiar de mesa</button>
               </div>
             </div>
@@ -125,22 +132,39 @@ export default function DetalleMesa() {
                 {pedidos.length === 0 && <p className="text-center text-taupe">Sin pedidos todavía.</p>}
                 {pedidos.map((p) => (
                   <div key={p.id} className={`tarjeta ${p.estado === 'cancelado' ? 'opacity-50' : ''}`}>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-taupe">#{p.numero} · {hora(p.created_at)} · {p.origen === 'qr' ? 'QR' : 'Mesonero'}</span>
-                      <span className="chip bg-crema">{ESTADO_TEXTO[p.estado]}</span>
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="text-taupe">
+                        #{p.numero} · {hora(p.created_at)} · ⏱ {minutosDesde(p.created_at, ahora)} min · {p.origen === 'qr' ? 'QR' : 'Mesonero'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {p.editado_at && <span className="chip bg-amber-100 text-amber-800">Actualizado</span>}
+                        <span className="chip bg-crema">{ESTADO_TEXTO[p.estado]}</span>
+                      </div>
                     </div>
-                    <ul className="mt-2 space-y-0.5">
+                    <ul className="mt-2 space-y-1">
                       {p.pedido_items?.map((i) => (
                         <li key={i.id} className="flex justify-between gap-2 text-sm">
-                          <span>{i.cantidad} × {i.nombre} <span className="text-taupe">· P{i.comensal}</span>{i.notas && <span className="block text-xs text-taupe">{i.notas}</span>}</span>
-                          <span>{usd(i.precio_usd * i.cantidad)}</span>
+                          <span>
+                            <b>{i.cantidad} ×</b> {i.nombre} <span className="text-taupe">· P{i.comensal}</span>
+                            <span className="ml-1 text-xs text-taupe">({usd(i.precio_usd)} c/u)</span>
+                            {i.notas && <span className="block text-xs text-naranja-oscuro">↳ {i.notas}</span>}
+                          </span>
+                          <span className="shrink-0 font-semibold">{usd(i.precio_usd * i.cantidad)}</span>
                         </li>
                       ))}
                     </ul>
-                    {p.notas && <p className="mt-1 text-xs text-taupe">Nota: {p.notas}</p>}
+                    {p.notas && <p className="mt-1.5 rounded-lg bg-crema/70 px-2.5 py-1 text-xs text-ciruela">📝 Nota: {p.notas}</p>}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {p.estado === 'por_aprobar' && <button className="btn-chico bg-oliva text-white" onClick={() => hacer(cambiarEstado(p.id, 'nuevo'))}>Confirmar y enviar a cocina</button>}
                       {p.estado === 'listo' && <button className="btn-chico bg-oliva text-white" onClick={() => hacer(cambiarEstado(p.id, 'servido'))}>Marcar servido</button>}
+                      {['por_aprobar', 'nuevo', 'preparando', 'listo'].includes(p.estado) && (
+                        <button
+                          className="btn-chico bg-naranja/15 text-naranja-oscuro hover:bg-naranja/25"
+                          onClick={() => { setPedidoEditar(p); setHoja('pedido'); }}
+                        >
+                          ✏️ Editar pedido / nota
+                        </button>
+                      )}
                       {!['cancelado', 'servido'].includes(p.estado) && (['por_aprobar', 'nuevo'].includes(p.estado) || esCaja) && (
                         <button className="btn-peligro py-1.5" onClick={() => confirm(p.estado === 'preparando' || p.estado === 'listo' ? 'Cocina ya lo preparó o lo está preparando. ¿Cancelar igual?' : '¿Cancelar este pedido?') && hacer(cambiarEstado(p.id, 'cancelado'))}>Cancelar</button>
                       )}
@@ -213,8 +237,19 @@ export default function DetalleMesa() {
         )}
       </main>
 
-      <Hoja abierta={hoja === 'pedido'} onCerrar={() => setHoja('')} titulo={`Pedido · Mesa ${mesa.nombre || mesa.numero}`}>
-        <TomarPedido mesaId={mesa.id} capacidad={mesa.capacidad} tasa={tasa} onListo={() => { setHoja(''); cargar(); }} />
+      <Hoja
+        abierta={hoja === 'pedido'}
+        onCerrar={() => { setHoja(''); setPedidoEditar(null); }}
+        titulo={pedidoEditar ? `Editar pedido #${pedidoEditar.numero} · Mesa ${mesa.nombre || mesa.numero}` : `Pedido · Mesa ${mesa.nombre || mesa.numero}`}
+      >
+        <TomarPedido
+          key={pedidoEditar?.id || 'nuevo'}
+          mesaId={mesa.id}
+          capacidad={mesa.capacidad}
+          tasa={tasa}
+          pedidoEditar={pedidoEditar}
+          onListo={() => { setHoja(''); setPedidoEditar(null); cargar(); }}
+        />
       </Hoja>
 
       <Hoja abierta={hoja === 'mover'} onCerrar={() => setHoja('')} titulo="Mover a otra mesa">

@@ -64,6 +64,7 @@ export function Delivery({ categorias, productosIniciales, zonas, ajustes }: {
         productos={productos}
         tasa={tasa}
         onAgregar={(p) => carrito.agregar(p)}
+        onQuitar={(p) => carrito.quitar(p.id)}
         cantidadDe={carrito.cantidadDe}
         ocultarSoloSalon
       />

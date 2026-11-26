@@ -71,7 +71,14 @@ export default function Cocina() {
                     <article key={p.id}
                       className={`overflow-hidden rounded-2xl bg-white text-ciruela shadow ${tarde ? 'ring-4 ring-red-500 animate-[pulse_2s_ease-in-out_infinite]' : ''}`}>
                       <div className={`flex items-center justify-between px-4 py-2 text-white ${delivery ? 'bg-naranja' : 'bg-oliva'}`}>
-                        <span className="text-lg font-bold">{delivery ? `DELIVERY #${p.numero}` : `MESA ${mesas[p.mesa_id || ''] ?? '?'}`}</span>
+                        <span className="flex items-center gap-2 text-lg font-bold">
+                          {delivery ? `DELIVERY #${p.numero}` : `MESA ${mesas[p.mesa_id || ''] ?? '?'}`}
+                          {p.editado_at && (
+                            <span className="rounded-full bg-amber-300 px-2 py-0.5 text-[0.65rem] font-extrabold uppercase text-ciruela">
+                              Editado
+                            </span>
+                          )}
+                        </span>
                         <span className={`rounded-full px-2 py-0.5 text-sm font-bold ${tarde ? 'bg-red-600' : 'bg-black/20'}`}>
                           {total} min
                         </span>

@@ -64,11 +64,16 @@ export function MarcoPanel({ perfil, children }: { perfil: Perfil; children: Rea
     // Con RLS, Supabase no manda el registro anterior: se recuerda aquí el último estado visto
     const id = String(fila.id || '');
     const antes = (c.table === 'pedidos' && vistos.current.get(id)) || {};
-    if (c.table === 'pedidos' && id) vistos.current.set(id, { estado: fila.estado, motorizado_id: fila.motorizado_id });
+    if (c.table === 'pedidos' && id) {
+      vistos.current.set(id, { estado: fila.estado, motorizado_id: fila.motorizado_id, editado_at: fila.editado_at });
+    }
     if (c.table === 'pedidos') {
       const num = `#${fila.numero ?? ''}`;
       if (fila.estado === 'nuevo' && antes.estado !== 'nuevo' && (r === 'cocina' || r === 'admin')) {
         sonar('nuevo'); notificar('Nuevo pedido en cocina', `${fila.tipo === 'delivery' ? 'Delivery' : 'Sala'} ${num}`, '/panel/cocina');
+      }
+      if (c.eventType === 'UPDATE' && fila.editado_at && fila.editado_at !== antes.editado_at && (r === 'cocina' || r === 'admin')) {
+        sonar('llamada'); notificar('Pedido actualizado', `El mesonero editó el pedido ${num}`, '/panel/cocina');
       }
       if (c.eventType === 'INSERT' && fila.estado === 'por_aprobar') {
         if (fila.tipo === 'mesa' && ['mesonero', 'cajero', 'admin'].includes(r)) { sonar('llamada'); notificar('Pedido desde el QR', `Pedido ${num} por confirmar`, '/panel/mesas'); }

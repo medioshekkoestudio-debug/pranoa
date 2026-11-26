@@ -9,12 +9,13 @@ interface Props {
   tasa: number;
   /** Sin esto la carta es solo para ver */
   onAgregar?: (p: Producto) => void;
+  onQuitar?: (p: Producto) => void;
   cantidadDe?: (id: string) => number;
   ocultarSoloSalon?: boolean;
   compacta?: boolean; // vista del personal: sin fotos grandes
 }
 
-export function CartaInteractiva({ categorias, productos, tasa, onAgregar, cantidadDe, ocultarSoloSalon, compacta }: Props) {
+export function CartaInteractiva({ categorias, productos, tasa, onAgregar, onQuitar, cantidadDe, ocultarSoloSalon, compacta }: Props) {
   const [sinAlergenos, setSinAlergenos] = useState<string[]>([]);
   const [verFiltros, setVerFiltros] = useState(false);
   const [busqueda, setBusqueda] = useState('');
@@ -111,14 +112,36 @@ export function CartaInteractiva({ categorias, productos, tasa, onAgregar, canti
                         <span className="chip bg-ciruela/10">Agotado</span>
                       ) : (
                         onAgregar && (
-                          <button
-                            type="button"
-                            onClick={() => onAgregar(p)}
-                            className="btn-chico bg-oliva px-4 text-white"
-                            aria-label={`Agregar ${p.nombre}`}
-                          >
-                            {n > 0 ? `${n} · +` : 'Agregar'}
-                          </button>
+                          n > 0 && onQuitar ? (
+                            <div className="flex items-center gap-1.5 rounded-full bg-oliva/10 p-1 ring-1 ring-oliva/30">
+                              <button
+                                type="button"
+                                onClick={() => onQuitar(p)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-base font-bold text-ciruela shadow-sm transition active:scale-95"
+                                aria-label={`Quitar ${p.nombre}`}
+                              >
+                                −
+                              </button>
+                              <span className="min-w-[1.25rem] text-center text-sm font-bold text-ciruela">{n}</span>
+                              <button
+                                type="button"
+                                onClick={() => onAgregar(p)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-oliva text-base font-bold text-white shadow-sm transition active:scale-95"
+                                aria-label={`Agregar ${p.nombre}`}
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => onAgregar(p)}
+                              className="btn-chico bg-oliva px-4 text-white"
+                              aria-label={`Agregar ${p.nombre}`}
+                            >
+                              {n > 0 ? `${n} · +` : 'Agregar'}
+                            </button>
+                          )
                         )
                       )}
                     </div>

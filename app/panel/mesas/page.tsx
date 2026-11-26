@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CabeceraPanel } from '@/components/CabeceraPanel';
 import { supabaseNavegador } from '@/lib/supabase/cliente';
@@ -15,6 +15,12 @@ export default function Mesas() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [llamadas, setLlamadas] = useState<Llamada[]>([]);
   const [cargado, setCargado] = useState(false);
+  const [ahora, setAhora] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setAhora(Date.now()), 15000);
+    return () => clearInterval(t);
+  }, []);
 
   const cargar = useCallback(async () => {
     const sb = supabaseNavegador();
@@ -125,14 +131,21 @@ export default function Mesas() {
                 {lista.map((m) => {
                   const e = estadoMesa(m.id, cuentas, pedidos, llamadas);
                   const cuenta = cuentas.find((c) => c.mesa_id === m.id);
-                  const total = pedidos.filter((p) => p.cuenta_id === cuenta?.id && p.estado !== 'cancelado').reduce((s, p) => s + Number(p.subtotal_usd), 0);
+                  const pedidosMesa = cuenta ? pedidos.filter((p) => p.cuenta_id === cuenta.id && p.estado !== 'cancelado') : [];
+                  const total = pedidosMesa.reduce((s, p) => s + Number(p.subtotal_usd), 0);
+                  const pendienteCocina = pedidosMesa.find((p) => ['por_aprobar', 'nuevo', 'preparando', 'listo'].includes(p.estado));
+                  const mins = pendienteCocina ? minutosDesde(pendienteCocina.created_at, ahora) : cuenta ? minutosDesde(cuenta.abierta_at, ahora) : 0;
                   return (
                     <Link key={m.id} href={`/panel/mesas/${m.id}`}
-                      className={`flex aspect-square flex-col items-center justify-center rounded-2xl shadow-sm transition active:scale-95 ${ESTILO_MESA[e].fondo} ${ESTILO_MESA[e].texto}`}>
-                      <span className="text-2xl sm:text-3xl font-bold">{m.nombre || m.numero}</span>
+                      className={`flex aspect-square flex-col items-center justify-center rounded-2xl p-2 text-center shadow-sm transition active:scale-95 ${ESTILO_MESA[e].fondo} ${ESTILO_MESA[e].texto}`}>
+                      <span className="text-2xl font-bold sm:text-3xl">{m.nombre || m.numero}</span>
                       <span className="text-xs font-semibold">{ESTILO_MESA[e].nombre}</span>
                       <span className="text-[0.65rem] opacity-80">{m.capacidad} puestos</span>
-                      {cuenta && <span className="mt-0.5 text-xs font-semibold opacity-95">${total.toFixed(2)} · {minutosDesde(cuenta.abierta_at)}′</span>}
+                      {cuenta && (
+                        <span className="mt-1 rounded-full bg-black/15 px-2 py-0.5 text-[0.68rem] font-semibold">
+                          ${total.toFixed(2)} · ⏱ {mins} min
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

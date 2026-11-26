@@ -30,6 +30,7 @@ export interface Pedido {
   direccion: string | null; zona_id: string | null; costo_envio_usd: number; subtotal_usd: number; notas: string | null;
   mesonero_id: string | null; motorizado_id: string | null; token_publico: string; created_at: string;
   aprobado_at: string | null; iniciado_at: string | null; listo_at: string | null; cerrado_at: string | null;
+  editado_at?: string | null;
   pedido_items?: PedidoItem[];
 }
 export interface Pago {
