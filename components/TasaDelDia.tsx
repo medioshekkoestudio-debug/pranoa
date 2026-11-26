@@ -1,15 +1,31 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { rpc } from '@/lib/acciones';
-import { bs } from '@/lib/formato';
+import { bs, hoyVE } from '@/lib/formato';
 
 export function TasaDelDia({ tasa, actualizada, fuente, onCambio }: { tasa: number; actualizada: string | null; fuente: string | null; onCambio: () => void }) {
   const [valor, setValor] = useState('');
   const [msg, setMsg] = useState('');
   const [ocupado, setOcupado] = useState(false);
+  const autoIntentado = useRef(false);
   useEffect(() => { setValor(tasa ? String(tasa) : ''); }, [tasa]);
 
-  const vieja = !actualizada || new Date(actualizada).toDateString() !== new Date().toDateString();
+  const vieja = !actualizada || new Date(actualizada).toLocaleDateString('en-CA', { timeZone: 'America/Caracas' }) !== hoyVE();
+
+  // Sincronización automática diaria con BCV si la tasa aún no es de hoy
+  useEffect(() => {
+    if (!vieja || autoIntentado.current) return;
+    autoIntentado.current = true;
+    fetch('/api/tasa-bcv', { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.actualizada && d.valor) {
+          setMsg(`Tasa BCV actualizada automáticamente: ${bs(d.valor)}`);
+          onCambio();
+        }
+      })
+      .catch(() => { /* si falla, el cajero puede actualizar a mano */ });
+  }, [vieja, onCambio]);
 
   async function guardar(v: number, f: string) {
     setOcupado(true);

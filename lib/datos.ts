@@ -1,9 +1,19 @@
 import { supabaseServidor } from './supabase/servidor';
+import { sincronizarTasaBcvSiFalta } from './tasaBcv';
 import type { Ajustes, Categoria, Producto, Zona } from './tipos';
 
 export async function cargarAjustes(): Promise<Ajustes> {
   const { data } = await supabaseServidor().from('ajustes').select('*').eq('id', 1).single();
-  return data as Ajustes;
+  const aj = data as Ajustes;
+  if (aj && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const res = await sincronizarTasaBcvSiFalta(false, aj);
+      if (res.ajustes) return res.ajustes;
+    } catch {
+      // mantener tasa actual si falla la red
+    }
+  }
+  return aj;
 }
 
 /** Carta pública (sin costos), ordenada */
