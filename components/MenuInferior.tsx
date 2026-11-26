@@ -27,6 +27,14 @@ export function MenuInferior({ botones, oscuro = false }: { botones: BotonMenu[]
           const activo = ruta === b.href || (b.href !== '/' && ruta.startsWith(b.href + '/'));
           const contenido = (
             <>
+              {/* Indicador activo: barra superior con color de marca */}
+              {activo && (
+                <span
+                  className={`absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full ${
+                    oscuro ? 'bg-naranja' : 'bg-oliva'
+                  }`}
+                />
+              )}
               <span className="relative">
                 <Icono nombre={b.icono} className="h-6 w-6" />
                 {!!b.aviso && (
@@ -35,11 +43,17 @@ export function MenuInferior({ botones, oscuro = false }: { botones: BotonMenu[]
                   </span>
                 )}
               </span>
-              <span className="text-[0.68rem] font-medium">{b.titulo}</span>
+              <span className={`text-[0.68rem] font-semibold ${activo ? '' : 'font-medium'}`}>{b.titulo}</span>
             </>
           );
-          const clase = `flex h-16 w-full flex-col items-center justify-center gap-0.5 transition-colors ${
-            activo ? (oscuro ? 'text-naranja' : 'text-oliva') : 'opacity-70 hover:opacity-100'
+          const clase = `relative flex h-16 w-full flex-col items-center justify-center gap-0.5 transition-all ${
+            activo
+              ? oscuro
+                ? 'text-naranja'
+                : 'text-oliva'
+              : oscuro
+                ? 'text-crema/60 hover:text-crema/90'
+                : 'text-ciruela/50 hover:text-ciruela/80'
           }`;
           return (
             <li key={b.href + b.titulo} className="flex-1">
