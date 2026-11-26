@@ -40,7 +40,7 @@ export default function Mesas() {
     setCargado(true);
   }, []);
 
-  useTiempoReal(['pedidos', 'llamadas', 'cuentas'], cargar, 30000);
+  useTiempoReal(['pedidos', 'pedido_items', 'llamadas', 'cuentas'], cargar, 30000);
 
   const numeroMesa = (id: string | null) => {
     const m = mesas.find((x) => x.id === id);
@@ -48,6 +48,10 @@ export default function Mesas() {
   };
   const porAprobar = pedidos.filter((p) => p.estado === 'por_aprobar');
   const listos = pedidos.filter((p) => p.estado === 'listo');
+  // Platos individuales marcados como "Retirar" en cocina aunque el resto del pedido siga preparándose
+  const platosRetirar = pedidos
+    .filter((p) => p.estado === 'preparando')
+    .flatMap((p) => (p.pedido_items || []).filter((i) => i.estado === 'retirar').map((i) => ({ ...i, mesa_id: p.mesa_id, pedido_num: p.numero })));
   const conteo = (e: EstadoMesa) => mesas.filter((m) => estadoMesa(m.id, cuentas, pedidos, llamadas) === e).length;
 
   return (
@@ -85,6 +89,28 @@ export default function Mesas() {
                     <button className="btn-chico flex-1 bg-oliva py-2 text-white" onClick={() => hacer(cambiarEstado(p.id, 'nuevo'))}>Confirmar y enviar a cocina</button>
                     <button className="btn-peligro" onClick={() => confirm('¿Rechazar este pedido?') && hacer(cambiarEstado(p.id, 'cancelado'))}>Rechazar</button>
                   </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {platosRetirar.length > 0 && (
+          <section>
+            <h2 className="mb-2 font-bold">Platos listos para retirar en cocina</h2>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {platosRetirar.map((it) => (
+                <div key={it.id} className="tarjeta flex items-center gap-3 border-l-4 border-amber-400">
+                  <div className="flex-1">
+                    <p className="font-semibold">Mesa {numeroMesa(it.mesa_id)} · #{it.pedido_num}</p>
+                    <p className="text-sm">{it.cantidad} × {it.nombre}</p>
+                  </div>
+                  <button
+                    className="btn-chico bg-emerald-600 py-2 text-white"
+                    onClick={() => hacer(rpc('cambiar_estado_item', { p_item: it.id, p_estado: 'entregado' })).then(cargar)}
+                  >
+                    Retirado
+                  </button>
                 </div>
               ))}
             </div>

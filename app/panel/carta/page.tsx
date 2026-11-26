@@ -13,6 +13,7 @@ import type { Categoria, Producto } from '@/lib/tipos';
 export default function GestorCarta() {
   const perfil = usePerfil();
   const esAdmin = perfil.rol === 'admin';
+  const esCocina = perfil.rol === 'cocina';
   const [cats, setCats] = useState<Categoria[]>([]);
   const [prods, setProds] = useState<Producto[]>([]);
   const [editando, setEditando] = useState<Producto | 'nuevo' | null>(null);
@@ -63,7 +64,8 @@ export default function GestorCarta() {
                       <button className="min-w-0 flex-1 text-left" disabled={!esAdmin} onClick={() => setEditando(p)}>
                         <p className="truncate font-semibold">{p.nombre}{p.activo === false && ' (fuera de carta)'}</p>
                         <p className="text-sm text-taupe">
-                          {usd(p.precio_usd)}
+                          {!esCocina && usd(p.precio_usd)}
+                          {p.tiempo_prep_min ? `${!esCocina ? ' · ' : ''}⏱ ${p.tiempo_prep_min} min` : ''}
                           {margen !== null && <span className={margen < 60 ? 'text-red-600' : ''}> · costo {usd(p.costo_usd!)} · margen {margen}%</span>}
                         </p>
                       </button>

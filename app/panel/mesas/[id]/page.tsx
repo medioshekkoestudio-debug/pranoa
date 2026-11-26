@@ -141,17 +141,43 @@ export default function DetalleMesa() {
                         <span className="chip bg-crema">{ESTADO_TEXTO[p.estado]}</span>
                       </div>
                     </div>
-                    <ul className="mt-2 space-y-1">
-                      {p.pedido_items?.map((i) => (
-                        <li key={i.id} className="flex justify-between gap-2 text-sm">
-                          <span>
-                            <b>{i.cantidad} ×</b> {i.nombre} <span className="text-taupe">· P{i.comensal}</span>
-                            <span className="ml-1 text-xs text-taupe">({usd(i.precio_usd)} c/u)</span>
-                            {i.notas && <span className="block text-xs text-naranja-oscuro">↳ {i.notas}</span>}
-                          </span>
-                          <span className="shrink-0 font-semibold">{usd(i.precio_usd * i.cantidad)}</span>
-                        </li>
-                      ))}
+                    <ul className="mt-2 space-y-1.5">
+                      {p.pedido_items?.map((i) => {
+                        const sub = i.estado || (p.estado === 'servido' ? 'entregado' : p.estado === 'listo' ? 'retirar' : 'preparando');
+                        const badge =
+                          sub === 'entregado'
+                            ? 'bg-emerald-600 text-white'
+                            : sub === 'retirar'
+                              ? 'bg-amber-400 text-white'
+                              : 'bg-red-600 text-white';
+                        const textoSub = sub === 'entregado' ? 'Entregado' : sub === 'retirar' ? 'Retirar' : 'Preparando';
+                        return (
+                          <li key={i.id} className="flex items-start justify-between gap-2 text-sm">
+                            <span className="flex flex-wrap items-center gap-1.5">
+                              {p.estado !== 'cancelado' && p.estado !== 'por_aprobar' && (
+                                <span className={`rounded px-1.5 py-0.5 text-[0.65rem] font-bold ${badge}`}>{textoSub}</span>
+                              )}
+                              <span>
+                                <b>{i.cantidad} ×</b> {i.nombre} <span className="text-taupe">· P{i.comensal}</span>
+                                <span className="ml-1 text-xs text-taupe">({usd(i.precio_usd)} c/u)</span>
+                              </span>
+                              {i.notas && <span className="block w-full text-xs text-naranja-oscuro">↳ {i.notas}</span>}
+                            </span>
+                            <div className="flex shrink-0 items-center gap-2">
+                              {sub === 'retirar' && (
+                                <button
+                                  type="button"
+                                  className="rounded-full bg-emerald-600 px-2 py-0.5 text-[0.68rem] font-bold text-white"
+                                  onClick={() => hacer(rpc('cambiar_estado_item', { p_item: i.id, p_estado: 'entregado' })).then(cargar)}
+                                >
+                                  Retirar ✓
+                                </button>
+                              )}
+                              <span className="font-semibold">{usd(i.precio_usd * i.cantidad)}</span>
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                     {p.notas && <p className="mt-1.5 rounded-lg bg-crema/70 px-2.5 py-1 text-xs text-ciruela">📝 Nota: {p.notas}</p>}
                     <div className="mt-3 flex flex-wrap gap-2">

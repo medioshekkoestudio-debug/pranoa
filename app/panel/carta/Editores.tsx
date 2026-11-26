@@ -15,6 +15,7 @@ export function EditorProducto({ producto, categorias, onListo }: { producto: Pr
     solo_salon: producto?.solo_salon || false,
     activo: producto?.activo !== false,
     orden: producto?.orden ?? 0,
+    tiempo_prep_min: producto?.tiempo_prep_min != null ? String(producto.tiempo_prep_min) : '',
     foto_url: producto?.foto_url || '',
   });
   const [subiendo, setSubiendo] = useState(false);
@@ -39,7 +40,9 @@ export function EditorProducto({ producto, categorias, onListo }: { producto: Pr
       nombre: f.nombre.trim(), descripcion: f.descripcion.trim() || null,
       precio_usd: Number(f.precio_usd), costo_usd: f.costo_usd === '' ? null : Number(f.costo_usd),
       categoria_id: f.categoria_id || null, alergenos: f.alergenos, solo_salon: f.solo_salon,
-      activo: f.activo, orden: Number(f.orden) || 0, foto_url: f.foto_url || null,
+      activo: f.activo, orden: Number(f.orden) || 0,
+      tiempo_prep_min: f.tiempo_prep_min === '' ? null : Math.max(1, Math.min(240, Number(f.tiempo_prep_min) || 15)),
+      foto_url: f.foto_url || null,
     };
     const sb = supabaseNavegador();
     const { error } = producto ? await sb.from('productos').update(datos).eq('id', producto.id) : await sb.from('productos').insert(datos);
@@ -61,9 +64,10 @@ export function EditorProducto({ producto, categorias, onListo }: { producto: Pr
       </div>
       <input className="campo" placeholder="Nombre" required value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} />
       <textarea className="campo" placeholder="Descripción" rows={2} value={f.descripcion} onChange={(e) => setF({ ...f, descripcion: e.target.value })} />
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div><label className="etiqueta">Precio $</label><input className="campo" inputMode="decimal" required value={f.precio_usd} onChange={(e) => setF({ ...f, precio_usd: e.target.value.replace(',', '.') })} /></div>
         <div><label className="etiqueta">Costo $</label><input className="campo" inputMode="decimal" value={f.costo_usd} onChange={(e) => setF({ ...f, costo_usd: e.target.value.replace(',', '.') })} /></div>
+        <div><label className="etiqueta">Prep. (min)</label><input className="campo" type="number" min={1} max={240} placeholder="Ej: 15" value={f.tiempo_prep_min} onChange={(e) => setF({ ...f, tiempo_prep_min: e.target.value })} /></div>
         <div><label className="etiqueta">Orden</label><input className="campo" inputMode="numeric" value={f.orden} onChange={(e) => setF({ ...f, orden: Number(e.target.value) || 0 })} /></div>
       </div>
       {Number(f.costo_usd) > 0 && Number(f.precio_usd) > 0 && (

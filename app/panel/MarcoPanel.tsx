@@ -56,16 +56,36 @@ export function MarcoPanel({ perfil, children }: { perfil: Perfil; children: Rea
 
   const recontar = useCallback(async () => setContadores(await contar(perfil)), [perfil]);
 
+  // Desbloquear Web Audio en el primer toque del usuario para garantizar sonidos de notificación
+  useEffect(() => {
+    const desbloquear = () => {
+      try {
+        const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (AC) { const c = new AC(); if (c.state === 'suspended') c.resume(); c.close(); }
+      } catch { /* sin audio */ }
+      window.removeEventListener('pointerdown', desbloquear);
+    };
+    window.addEventListener('pointerdown', desbloquear, { passive: true });
+    return () => window.removeEventListener('pointerdown', desbloquear);
+  }, []);
+
   // alertas con sonido y notificación según el perfil
   // los contadores se recalculan agrupando ráfagas; los avisos se revisan evento por evento
-  useTiempoReal(['pedidos', 'llamadas', 'reservas'], () => { recontar(); }, 30000, (c) => {
+  useTiempoReal(['pedidos', 'pedido_items', 'llamadas', 'reservas'], () => { recontar(); }, 30000, (c) => {
     const fila = (c.new || {}) as Record<string, unknown>;
     const r = perfil.rol;
     // Con RLS, Supabase no manda el registro anterior: se recuerda aquí el último estado visto
     const id = String(fila.id || '');
-    const antes = (c.table === 'pedidos' && vistos.current.get(id)) || {};
-    if (c.table === 'pedidos' && id) {
-      vistos.current.set(id, { estado: fila.estado, motorizado_id: fila.motorizado_id, editado_at: fila.editado_at });
+    const claveVisto = `${c.table}:${id}`;
+    const antes = vistos.current.get(claveVisto) || {};
+    if (id && (c.table === 'pedidos' || c.table === 'pedido_items')) {
+      vistos.current.set(claveVisto, { estado: fila.estado, motorizado_id: fila.motorizado_id, editado_at: fila.editado_at });
+    }
+    if (c.table === 'pedido_items' && fila.estado === 'retirar' && antes.estado !== 'retirar') {
+      if (r === 'mesonero' || r === 'admin') {
+        sonar('listo');
+        notificar('Plato listo para retirar', `${fila.cantidad ?? 1}× ${fila.nombre ?? 'Plato'} listo en cocina`, '/panel/mesas');
+      }
     }
     if (c.table === 'pedidos') {
       const num = `#${fila.numero ?? ''}`;

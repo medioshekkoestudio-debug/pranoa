@@ -2,6 +2,7 @@ import type { Rol } from './permisos';
 
 export type EstadoPedido =
   | 'por_aprobar' | 'nuevo' | 'preparando' | 'listo' | 'servido' | 'en_ruta' | 'entregado' | 'cancelado';
+export type SubestadoItem = 'preparando' | 'retirar' | 'entregado';
 export type MetodoPago = 'pago_movil' | 'zelle' | 'efectivo_usd' | 'efectivo_bs' | 'punto';
 
 export interface Perfil { id: string; nombre: string; rol: Rol; telefono: string | null; activo: boolean }
@@ -15,7 +16,7 @@ export interface Categoria { id: string; nombre: string; orden: number; activa: 
 export interface Producto {
   id: string; categoria_id: string | null; nombre: string; descripcion: string | null; precio_usd: number;
   costo_usd?: number | null; foto_url: string | null; alergenos: string[]; disponible: boolean;
-  activo?: boolean; solo_salon: boolean; orden: number;
+  activo?: boolean; solo_salon: boolean; orden: number; tiempo_prep_min?: number | null;
 }
 export interface Mesa { id: string; nombre: string; numero: number; ambiente: 'salon' | 'terraza'; capacidad: number; token: string; activa: boolean }
 export interface Cuenta { id: string; mesa_id: string; abierta: boolean; mesonero_id: string | null; abierta_at: string }
@@ -23,6 +24,7 @@ export interface Zona { id: string; nombre: string; tarifa_usd: number; activa: 
 export interface PedidoItem {
   id: string; pedido_id: string; producto_id: string | null; nombre: string; precio_usd: number;
   cantidad: number; notas: string | null; comensal: number;
+  estado?: SubestadoItem; tiempo_prep_min?: number | null;
 }
 export interface Pedido {
   id: string; numero: number; tipo: 'mesa' | 'delivery'; estado: EstadoPedido; origen: 'qr' | 'web' | 'personal';
