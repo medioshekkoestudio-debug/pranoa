@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { CabeceraPanel } from '@/components/CabeceraPanel';
 import { Logo } from '@/components/Logo';
+import { TarjetaQrWeb } from '@/components/QrWeb';
 import { supabaseNavegador } from '@/lib/supabase/cliente';
 import type { Mesa } from '@/lib/tipos';
 
@@ -104,6 +105,18 @@ export default function ConfigMesas() {
         <button className="btn-chico bg-oliva text-white" onClick={() => window.print()}>Imprimir QR</button>
       </CabeceraPanel>
       <main className="mx-auto max-w-5xl space-y-4 px-4 pt-4">
+        {/* QR general de la PWA (descargable y compartible) */}
+        <section className="grid gap-4 md:grid-cols-[280px,1fr] print:block">
+          <TarjetaQrWeb />
+          <div className="tarjeta flex flex-col justify-center space-y-2 print:hidden">
+            <h2 className="text-lg font-bold text-ciruela">QR general de la web</h2>
+            <p className="text-sm text-taupe">
+              Este QR dirige directamente a <b>www.espaciopranoa.com</b> (portada, carta, delivery y reservas).
+              Puedes descargarlo en alta calidad como imagen con el logo de Pranoa o compartirlo por WhatsApp y redes sociales.
+            </p>
+          </div>
+        </section>
+
         <form onSubmit={crear} className="tarjeta flex flex-wrap items-end gap-2 print:hidden">
           <div>
             <label className="etiqueta">Nombre</label>

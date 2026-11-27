@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Logo } from '@/components/Logo';
 import { BotonDescargar } from '@/components/Pwa';
+import { BotonQrWeb } from '@/components/QrWeb';
 import { cargarAjustes, enlaceWhatsapp } from '@/lib/datos';
 
 export const dynamic = 'force-dynamic';
@@ -95,6 +96,7 @@ export default async function Inicio() {
         <div className="flex flex-wrap justify-center gap-3">
           {wa && <a href={wa} target="_blank" rel="noreferrer" className="btn-primario">Escríbenos por WhatsApp</a>}
           <BotonDescargar />
+          <BotonQrWeb />
         </div>
         <footer className="mt-8 text-xs text-taupe-oscuro">
           © {new Date().getFullYear()} Pranoa · Valencia, Carabobo · Todos los derechos reservados ·{' '}
