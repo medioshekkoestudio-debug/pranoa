@@ -48,8 +48,12 @@ la pantalla: aunque alguien manipule la app, la base rechaza lo que su perfil no
 Importar el repositorio en Vercel y cargar las mismas 4 variables de `.env.example`
 (`NEXT_PUBLIC_SITE_URL` = el dominio final). `SUPABASE_SERVICE_ROLE_KEY` nunca lleva `NEXT_PUBLIC_`.
 
-Los **QR de las mesas** toman el dominio desde el que se abre *Panel → Mesas y QR* (no de la variable):
-imprimirlos estando dentro de `https://www.espaciopranoa.com`, no de `pranoa.vercel.app` ni de `localhost`.
+Los **QR de las mesas** apuntan siempre a `https://www.espaciopranoa.com` (se puede cambiar con `NEXT_PUBLIC_QR_URL`).
+También se pueden generar en PDF y PNG listos para imprimir con `npm run qr` (salida en `qr-impresion/`).
+
+Para la **tasa BCV diaria automática**, usar un cron externo gratuito (ej. `cron-job.org`) apuntando cada día a las 9:00 a. m. (hora Venezuela) a:
+`https://www.espaciopranoa.com/api/tasa-bcv?sincronizar=1&clave=<CRON_SECRET>`
+(definir `CRON_SECRET` en Vercel → Settings → Environment Variables).
 
 ## Marca
 

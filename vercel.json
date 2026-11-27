@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/tasa-bcv?sincronizar=1",
-      "schedule": "0 13 * * *"
-    }
-  ]
-}
