@@ -6,6 +6,10 @@ import { Logo } from '@/components/Logo';
 import { supabaseNavegador } from '@/lib/supabase/cliente';
 import type { Mesa } from '@/lib/tipos';
 
+/** Los QR SIEMPRE apuntan al dominio oficial, sin importar desde dónde se abra el panel
+ *  (pranoa.vercel.app, vistas previas o localhost). */
+const DOMINIO_QR = (process.env.NEXT_PUBLIC_QR_URL || 'https://www.espaciopranoa.com').replace(/\/$/, '');
+
 export default function ConfigMesas() {
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [qrs, setQrs] = useState<Record<string, string>>({});
@@ -21,7 +25,7 @@ export default function ConfigMesas() {
       (a.nombre || String(a.numero)).localeCompare(b.nombre || String(b.numero), 'es', { numeric: true }),
     );
     setMesas(lista);
-    const base = window.location.origin;
+    const base = DOMINIO_QR;
     const pares = await Promise.all(
       lista.map(async (m) => [
         m.id,
@@ -135,7 +139,7 @@ export default function ConfigMesas() {
         </form>
 
         <p className="text-sm text-taupe print:hidden">
-          Define el nombre, ambiente y cantidad de puestos de cada mesa. Cada QR abre la carta de su mesa; si se filtra, toca «Nuevo QR» y reimprime.
+          Define el nombre, ambiente y cantidad de puestos de cada mesa. Todos los QR apuntan a <b>{DOMINIO_QR.replace('https://', '')}</b>. Si un QR se filtra, toca «Nuevo QR» y reimprime.
         </p>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 print:grid-cols-3">
@@ -252,7 +256,7 @@ export default function ConfigMesas() {
                       >
                         {m.activa ? 'Desactivar' : 'Activar'}
                       </button>
-                      <a className="btn-chico bg-crema text-xs" href={`/mesa/${m.token}`} target="_blank" rel="noreferrer">Probar</a>
+                      <a className="btn-chico bg-crema text-xs" href={`${DOMINIO_QR}/mesa/${m.token}`} target="_blank" rel="noreferrer">Probar</a>
                       <button
                         type="button"
                         className="btn-chico bg-red-50 text-xs text-red-700 hover:bg-red-100"
