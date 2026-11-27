@@ -96,7 +96,17 @@ export default async function Inicio() {
           {wa && <a href={wa} target="_blank" rel="noreferrer" className="btn-primario">Escríbenos por WhatsApp</a>}
           <BotonDescargar />
         </div>
-        <p className="mt-8 text-xs text-taupe-oscuro">© {new Date().getFullYear()} Pranoa · Valencia, Carabobo</p>
+        <footer className="mt-8 text-xs text-taupe-oscuro">
+          © {new Date().getFullYear()} Pranoa · Valencia, Carabobo · Todos los derechos reservados ·{' '}
+          <a
+            href="https://grupomonterove.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold underline decoration-taupe-oscuro/40 underline-offset-2 transition hover:text-oliva"
+          >
+            Creado por Grupo Montero
+          </a>
+        </footer>
       </section>
     </main>
   );
