@@ -1,5 +1,8 @@
-﻿-- =====================================================================
--- MigraciÃ³n 0005: Nombres de mesas alfanumÃ©ricos + puestos configurables
+-- Script consolidado: migraciones 0005 a 0009 (se puede correr completo y mas de una vez)
+
+-- ===== 0005_nombres_mesas.sql =====
+-- =====================================================================
+-- Migración 0005: Nombres de mesas alfanuméricos + puestos configurables
 -- =====================================================================
 
 -- 1. Agregar columna nombre a mesas
@@ -15,7 +18,7 @@ begin
   end if;
 end $$;
 
--- 2. Hacer que `numero` se autogenere si no se envÃ­a al crear una mesa
+-- 2. Hacer que `numero` se autogenere si no se envía al crear una mesa
 create sequence if not exists mesas_numero_seq;
 select setval('mesas_numero_seq', greatest(coalesce((select max(numero) from mesas), 0), 100));
 alter table mesas alter column numero set default nextval('mesas_numero_seq');
@@ -26,7 +29,7 @@ where nombre like 'Mesa %'
   and id not in (select distinct mesa_id from cuentas where mesa_id is not null)
   and id not in (select distinct mesa_id from pedidos where mesa_id is not null);
 
--- Desactivar las de ejemplo que sÃ­ tengan historial para que no estorben
+-- Desactivar las de ejemplo que sí tengan historial para que no estorben
 update mesas set activa = false
 where nombre like 'Mesa %'
   and (id in (select distinct mesa_id from cuentas where mesa_id is not null)
@@ -85,7 +88,7 @@ insert into mesas (nombre, numero, ambiente, capacidad, activa)
 values ('G01', 701, 'terraza', 10, true)
 on conflict (nombre) do update set capacidad = excluded.capacidad, activa = true;
 
--- 5. Actualizar mesa_por_token para devolver tambiÃ©n nombre y capacidad
+-- 5. Actualizar mesa_por_token para devolver también nombre y capacidad
 drop function if exists mesa_por_token(uuid);
 create or replace function mesa_por_token(p_token uuid)
 returns table (id uuid, numero int, nombre text, ambiente ambiente_mesa, capacidad int)
@@ -97,11 +100,14 @@ grant execute on function mesa_por_token(uuid) to anon, authenticated;
 
 -- 6. Permiso de secuencia para que el admin pueda insertar mesas nuevas sin pasar `numero`
 grant usage, select on sequence mesas_numero_seq to authenticated;
+
+
+-- ===== 0006_editar_pedido_mesonero.sql =====
 -- =====================================================================
--- MigraciÃ³n 0006: EdiciÃ³n de pedidos enviados a cocina por el mesonero
+-- Migración 0006: Edición de pedidos enviados a cocina por el mesonero
 -- =====================================================================
 
--- 1. Registrar cuÃ¡ndo un pedido fue editado para disparar alerta en cocina
+-- 1. Registrar cuándo un pedido fue editado para disparar alerta en cocina
 alter table pedidos add column if not exists editado_at timestamptz;
 
 -- 2. RPC para que el mesonero (o cajero/admin) edite un pedido ya creado/enviado/listo
@@ -130,14 +136,14 @@ begin
   end if;
 
   if ped.estado in ('servido', 'entregado', 'cancelado') then
-    raise exception 'Este pedido ya estÃ¡ cerrado y no se puede editar';
+    raise exception 'Este pedido ya está cerrado y no se puede editar';
   end if;
 
   if p_items is null or jsonb_array_length(p_items) = 0 then
     raise exception 'El pedido debe tener al menos un plato';
   end if;
 
-  -- Reemplazar Ã­tems validando precios en servidor
+  -- Reemplazar ítems validando precios en servidor
   delete from pedido_items where pedido_id = p_pedido;
   sub := _insertar_items(p_pedido, p_items, false);
 
@@ -150,11 +156,14 @@ end $$;
 
 revoke execute on function editar_pedido_personal(uuid, jsonb, text) from public, anon;
 grant execute on function editar_pedido_personal(uuid, jsonb, text) to authenticated;
+
+
+-- ===== 0007_cocina_subestados_tiempos.sql =====
 -- =====================================================================
--- MigraciÃ³n 0007: Subestados por plato en cocina + tiempo estimado de preparaciÃ³n
+-- Migración 0007: Subestados por plato en cocina + tiempo estimado de preparación
 -- =====================================================================
 
--- 1. Tiempo estimado de preparaciÃ³n (minutos) por producto (configurable por admin)
+-- 1. Tiempo estimado de preparación (minutos) por producto (configurable por admin)
 alter table productos add column if not exists tiempo_prep_min int check (tiempo_prep_min is null or tiempo_prep_min between 1 and 240);
 
 -- Actualizar vista productos_publicos para exponer tiempo_prep_min (nunca costo_usd)
@@ -163,7 +172,7 @@ create or replace view productos_publicos with (security_invoker = true) as
          disponible, solo_salon, orden, tiempo_prep_min
   from productos where activo;
 
--- Permitir que anon lea tiempo_prep_min tambiÃ©n
+-- Permitir que anon lea tiempo_prep_min también
 grant select (tiempo_prep_min) on productos to anon;
 
 -- 2. Subestado y tiempo estimado por plato en pedido_items
@@ -177,7 +186,7 @@ begin
 end $$;
 alter table pedido_items add column if not exists tiempo_prep_min int;
 
--- Sincronizar Ã­tems histÃ³ricos de pedidos ya listos o servidos
+-- Sincronizar ítems históricos de pedidos ya listos o servidos
 update pedido_items pi
 set estado = case
   when p.estado in ('servido', 'entregado') then 'entregado'
@@ -195,14 +204,14 @@ declare
   it jsonb; prod productos; cant int; subtotal numeric := 0;
 begin
   if p_items is null or jsonb_array_length(p_items) = 0 then
-    raise exception 'El pedido estÃ¡ vacÃ­o';
+    raise exception 'El pedido está vacío';
   end if;
   if jsonb_array_length(p_items) > 60 then raise exception 'Demasiados platos en un pedido'; end if;
   for it in select * from jsonb_array_elements(p_items) loop
     select * into prod from productos where id = (it->>'producto_id')::uuid and activo;
-    if not found then raise exception 'Un plato ya no estÃ¡ en la carta'; end if;
-    if not prod.disponible then raise exception 'Â«%Â» se agotÃ³', prod.nombre; end if;
-    if p_es_delivery and prod.solo_salon then raise exception 'Â«%Â» no estÃ¡ disponible por delivery', prod.nombre; end if;
+    if not found then raise exception 'Un plato ya no está en la carta'; end if;
+    if not prod.disponible then raise exception '«%» se agotó', prod.nombre; end if;
+    if p_es_delivery and prod.solo_salon then raise exception '«%» no está disponible por delivery', prod.nombre; end if;
     cant := greatest(1, least(50, coalesce((it->>'cantidad')::int, 1)));
     insert into pedido_items (pedido_id, producto_id, nombre, precio_usd, cantidad, notas, comensal, estado, tiempo_prep_min)
     values (p_pedido, prod.id, prod.nombre, prod.precio_usd, cant,
@@ -218,7 +227,7 @@ end $$;
 revoke all on function _insertar_items(uuid, jsonb, boolean) from public, anon, authenticated;
 
 -- 4. RPC para cambiar el subestado de un plato individual (Preparando -> Retirar -> Entregado)
---    y ubicar automÃ¡ticamente el pedido en su estado principal segÃºn el avance de sus platos.
+--    y ubicar automáticamente el pedido en su estado principal según el avance de sus platos.
 create or replace function cambiar_estado_item(p_item uuid, p_estado text)
 returns void language plpgsql security definer set search_path = public as $$
 declare
@@ -232,7 +241,7 @@ declare
 begin
   if r is null then raise exception 'Sin permiso'; end if;
   if p_estado not in ('preparando', 'retirar', 'entregado') then
-    raise exception 'Subestado no vÃ¡lido';
+    raise exception 'Subestado no válido';
   end if;
 
   select * into it from pedido_items where id = p_item for update;
@@ -248,7 +257,7 @@ begin
 
   update pedido_items set estado = p_estado where id = p_item;
 
-  -- Recalcular estado principal del pedido segÃºn los subestados de todos sus platos
+  -- Recalcular estado principal del pedido según los subestados de todos sus platos
   select
     count(*),
     count(*) filter (where estado = 'preparando'),
@@ -262,10 +271,10 @@ begin
       -- Todos los platos fueron entregados al mesonero
       nuevo_estado := case when ped.tipo = 'mesa' then 'servido'::estado_pedido else 'listo'::estado_pedido end;
     elsif total_items > 0 and pendientes = 0 and por_retirar > 0 then
-      -- Ninguno en preparaciÃ³n y al menos uno listo para retirar
+      -- Ninguno en preparación y al menos uno listo para retirar
       nuevo_estado := 'listo'::estado_pedido;
     else
-      -- AÃºn hay platos preparÃ¡ndose
+      -- Aún hay platos preparándose
       nuevo_estado := 'preparando'::estado_pedido;
     end if;
 
@@ -334,8 +343,11 @@ begin
     update pedido_items set estado = 'preparando' where pedido_id = p_pedido;
   end if;
 end $$;
+
+
+-- ===== 0008_flujo_factura_cuenta.sql =====
 -- =====================================================================
--- MigraciÃ³n 0008: Flujo de factura/recibo (Mesonero <-> Cajero) y cierre por pago
+-- Migración 0008: Flujo de factura/recibo (Mesonero <-> Cajero) y cierre por pago
 -- =====================================================================
 
 -- 1. Campos de solicitud de factura y datos fiscales del cliente en `cuentas`
@@ -372,7 +384,7 @@ begin
 
   select * into c from cuentas where id = p_cuenta and abierta for update;
   if not found then
-    raise exception 'La cuenta ya estÃ¡ cerrada';
+    raise exception 'La cuenta ya está cerrada';
   end if;
 
   update cuentas set
@@ -390,19 +402,19 @@ begin
   end if;
 end $$;
 
--- 3. Cajero marca que la factura estÃ¡ lista para que el mesonero la retire
+-- 3. Cajero marca que la factura está lista para que el mesonero la retire
 create or replace function marcar_factura_lista(p_cuenta uuid) returns void
 language plpgsql security definer set search_path = public as $$
 declare
   c cuentas;
 begin
   if not tiene_rol('admin', 'cajero') then
-    raise exception 'Solo caja o administraciÃ³n puede marcar la factura como lista';
+    raise exception 'Solo caja o administración puede marcar la factura como lista';
   end if;
 
   select * into c from cuentas where id = p_cuenta and abierta for update;
   if not found then
-    raise exception 'La cuenta ya estÃ¡ cerrada';
+    raise exception 'La cuenta ya está cerrada';
   end if;
 
   update cuentas set
@@ -426,7 +438,7 @@ begin
 
   select * into c from cuentas where id = p_cuenta and abierta for update;
   if not found then
-    raise exception 'La cuenta ya estÃ¡ cerrada';
+    raise exception 'La cuenta ya está cerrada';
   end if;
 
   update cuentas set
@@ -444,8 +456,11 @@ revoke execute on function solicitar_factura_cuenta(uuid, text, text, text, text
 revoke execute on function marcar_factura_lista(uuid) from public, anon;
 revoke execute on function marcar_mesa_pagada(uuid) from public, anon;
 grant execute on function solicitar_factura_cuenta(uuid, text, text, text, text), marcar_factura_lista(uuid), marcar_mesa_pagada(uuid) to authenticated;
+
+
+-- ===== 0009_clientes_y_llamadas_nota.sql =====
 -- =====================================================================
--- MigraciÃ³n 0009: Clientes QR, estatus por plato en mesa y nota al llamar mesonero
+-- Migración 0009: Clientes QR, estatus por plato en mesa y nota al llamar mesonero
 -- =====================================================================
 
 -- 1. Tabla de clientes registrados (desde el QR o para delivery futuro)
@@ -461,7 +476,7 @@ create table if not exists clientes (
 
 alter table clientes enable row level security;
 
--- Solo admin y cajero pueden listar clientes desde el panel; el pÃºblico opera vÃ­a RPC
+-- Solo admin y cajero pueden listar clientes desde el panel; el público opera vía RPC
 do $$
 begin
   if not exists (select 1 from pg_policies where tablename = 'clientes' and policyname = 'clientes_ver_admin') then
@@ -472,7 +487,7 @@ end $$;
 grant select on clientes to authenticated;
 grant all on clientes to service_role;
 
--- Endurecer tasas: solo admin y cajero leen histÃ³rico de tasas (cocina y motorizado no lo necesitan)
+-- Endurecer tasas: solo admin y cajero leen histórico de tasas (cocina y motorizado no lo necesitan)
 drop policy if exists tasas_ver on tasas;
 create policy tasas_ver on tasas for select to authenticated using (tiene_rol('admin', 'cajero'));
 
@@ -488,9 +503,9 @@ declare
   nota_limpia text;
   existente uuid;
 begin
-  if p_tipo not in ('mesonero', 'cuenta') then raise exception 'Tipo no vÃ¡lido'; end if;
+  if p_tipo not in ('mesonero', 'cuenta') then raise exception 'Tipo no válido'; end if;
   select id into m from mesas where token = p_token and activa;
-  if m is null then raise exception 'CÃ³digo QR no vÃ¡lido'; end if;
+  if m is null then raise exception 'Código QR no válido'; end if;
 
   nota_limpia := nullif(left(trim(coalesce(p_nota, '')), 250), '');
 
@@ -501,12 +516,12 @@ begin
   if existente is null then
     insert into llamadas (mesa_id, tipo, nota) values (m, p_tipo, nota_limpia);
   elsif nota_limpia is not null then
-    -- Si el comensal envÃ­a una nota nueva, insertar un aviso nuevo para disparar el sonido en tiempo real
+    -- Si el comensal envía una nota nueva, insertar un aviso nuevo para disparar el sonido en tiempo real
     insert into llamadas (mesa_id, tipo, nota) values (m, p_tipo, nota_limpia);
   end if;
 end $$;
 
--- 4. RPC pÃºblica para registrar / actualizar perfil de cliente desde el QR de la mesa
+-- 4. RPC pública para registrar / actualizar perfil de cliente desde el QR de la mesa
 create or replace function registrar_cliente_qr(
   p_token uuid,
   p_nombre text,
@@ -522,11 +537,11 @@ declare
   c_abierta uuid;
 begin
   select * into m from mesas where token = p_token and activa;
-  if not found then raise exception 'CÃ³digo QR no vÃ¡lido'; end if;
+  if not found then raise exception 'Código QR no válido'; end if;
 
   if length(trim(coalesce(p_nombre, ''))) < 2 then raise exception 'Escribe tu nombre'; end if;
   tel_norm := regexp_replace(coalesce(p_telefono, ''), '\D', '', 'g');
-  if length(tel_norm) < 10 then raise exception 'TelÃ©fono no vÃ¡lido (mÃ­nimo 10 dÃ­gitos)'; end if;
+  if length(tel_norm) < 10 then raise exception 'Teléfono no válido (mínimo 10 dígitos)'; end if;
 
   insert into clientes (nombre, cedula, telefono, correo, updated_at)
   values (
@@ -543,7 +558,7 @@ begin
     updated_at = now()
   returning * into cli;
 
-  -- Si la mesa ya tiene cuenta abierta sin datos del cliente, precargarlos para facturaciÃ³n
+  -- Si la mesa ya tiene cuenta abierta sin datos del cliente, precargarlos para facturación
   select id into c_abierta from cuentas where mesa_id = m.id and abierta limit 1;
   if c_abierta is not null then
     update cuentas set
@@ -592,3 +607,5 @@ grant execute on function registrar_cliente_qr(uuid, text, text, text, text) to 
 
 revoke execute on function pedidos_de_mesa(uuid) from public;
 grant execute on function pedidos_de_mesa(uuid) to anon, authenticated;
+
+
