@@ -52,12 +52,32 @@ export default function Mesas() {
   const platosRetirar = pedidos
     .filter((p) => p.estado === 'preparando')
     .flatMap((p) => (p.pedido_items || []).filter((i) => i.estado === 'retirar').map((i) => ({ ...i, mesa_id: p.mesa_id, pedido_num: p.numero })));
+  const facturasListas = cuentas.filter((c) => c.factura_estado === 'lista');
   const conteo = (e: EstadoMesa) => mesas.filter((m) => estadoMesa(m.id, cuentas, pedidos, llamadas) === e).length;
 
   return (
     <>
       <CabeceraPanel titulo="Mesas" />
       <main className="mx-auto max-w-6xl space-y-5 px-4 pt-4">
+        {/* Facturas listas en caja para que el mesonero las retire */}
+        {facturasListas.length > 0 && (
+          <section className="space-y-2">
+            {facturasListas.map((c) => (
+              <Link
+                key={c.id}
+                href={`/panel/mesas/${c.mesa_id}`}
+                className="flex items-center gap-3 rounded-2xl bg-indigo-600 p-3 text-white shadow-sm transition hover:bg-indigo-700"
+              >
+                <span className="text-2xl">🧾</span>
+                <p className="flex-1 font-semibold">
+                  Mesa {numeroMesa(c.mesa_id)} · ¡Factura lista en caja! Pasa a buscarla
+                  {c.cliente_nombre ? <span className="ml-2 text-sm font-normal opacity-90">({c.cliente_nombre})</span> : null}
+                </p>
+                <span className="btn-chico bg-white text-indigo-700">Ver mesa →</span>
+              </Link>
+            ))}
+          </section>
+        )}
         {/* lo urgente arriba */}
         {llamadas.length > 0 && (
           <section className="space-y-2">

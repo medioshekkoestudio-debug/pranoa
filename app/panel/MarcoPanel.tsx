@@ -19,17 +19,24 @@ async function contar(p: Perfil): Promise<Contadores> {
   const n = async (q: PromiseLike<{ count: number | null }>) => (await q).count || 0;
   const c: Contadores = {};
   if (['admin', 'cajero', 'mesonero'].includes(p.rol)) {
-    const [llamadas, porAprobarMesa, listosMesa] = await Promise.all([
+    const [llamadas, porAprobarMesa, listosMesa, facturasListas] = await Promise.all([
       n(sb.from('llamadas').select('id', { count: 'exact', head: true }).eq('atendida', false)),
       n(sb.from('pedidos').select('id', { count: 'exact', head: true }).eq('tipo', 'mesa').eq('estado', 'por_aprobar')),
       n(sb.from('pedidos').select('id', { count: 'exact', head: true }).eq('tipo', 'mesa').eq('estado', 'listo')),
+      n(sb.from('cuentas').select('id', { count: 'exact', head: true }).eq('abierta', true).eq('factura_estado', 'lista')),
     ]);
-    c['/panel/mesas'] = llamadas + porAprobarMesa + listosMesa;
+    c['/panel/mesas'] = llamadas + porAprobarMesa + listosMesa + facturasListas;
   }
   if (['admin', 'cajero'].includes(p.rol)) {
-    c['/panel/delivery'] = await n(sb.from('pedidos').select('id', { count: 'exact', head: true }).eq('tipo', 'delivery').in('estado', ['por_aprobar', 'listo']));
-    c['/panel/caja'] = await n(sb.from('llamadas').select('id', { count: 'exact', head: true }).eq('atendida', false).eq('tipo', 'cuenta'));
-    c['/panel/reservas'] = await n(sb.from('reservas').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'));
+    const [deliv, llamCuenta, factSol, resv] = await Promise.all([
+      n(sb.from('pedidos').select('id', { count: 'exact', head: true }).eq('tipo', 'delivery').in('estado', ['por_aprobar', 'listo'])),
+      n(sb.from('llamadas').select('id', { count: 'exact', head: true }).eq('atendida', false).eq('tipo', 'cuenta')),
+      n(sb.from('cuentas').select('id', { count: 'exact', head: true }).eq('abierta', true).eq('factura_estado', 'solicitada')),
+      n(sb.from('reservas').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente')),
+    ]);
+    c['/panel/delivery'] = deliv;
+    c['/panel/caja'] = Math.max(llamCuenta, factSol);
+    c['/panel/reservas'] = resv;
   }
   if (p.rol === 'mesonero') {
     c['/panel/reservas'] = await n(sb.from('reservas').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'));
@@ -71,15 +78,30 @@ export function MarcoPanel({ perfil, children }: { perfil: Perfil; children: Rea
 
   // alertas con sonido y notificación según el perfil
   // los contadores se recalculan agrupando ráfagas; los avisos se revisan evento por evento
-  useTiempoReal(['pedidos', 'pedido_items', 'llamadas', 'reservas'], () => { recontar(); }, 30000, (c) => {
+  useTiempoReal(['pedidos', 'pedido_items', 'cuentas', 'llamadas', 'reservas'], () => { recontar(); }, 30000, (c) => {
     const fila = (c.new || {}) as Record<string, unknown>;
     const r = perfil.rol;
     // Con RLS, Supabase no manda el registro anterior: se recuerda aquí el último estado visto
     const id = String(fila.id || '');
     const claveVisto = `${c.table}:${id}`;
     const antes = vistos.current.get(claveVisto) || {};
-    if (id && (c.table === 'pedidos' || c.table === 'pedido_items')) {
-      vistos.current.set(claveVisto, { estado: fila.estado, motorizado_id: fila.motorizado_id, editado_at: fila.editado_at });
+    if (id && (c.table === 'pedidos' || c.table === 'pedido_items' || c.table === 'cuentas')) {
+      vistos.current.set(claveVisto, {
+        estado: fila.estado,
+        motorizado_id: fila.motorizado_id,
+        editado_at: fila.editado_at,
+        factura_estado: fila.factura_estado,
+      });
+    }
+    if (c.table === 'cuentas') {
+      if (fila.factura_estado === 'solicitada' && antes.factura_estado !== 'solicitada' && ['cajero', 'admin'].includes(r)) {
+        sonar('llamada');
+        notificar('Solicitud de factura', 'Un mesonero solicitó factura/recibo en caja', '/panel/caja');
+      }
+      if (fila.factura_estado === 'lista' && antes.factura_estado !== 'lista' && ['mesonero', 'admin'].includes(r)) {
+        sonar('listo');
+        notificar('Factura lista en caja', 'Ya puedes retirar la factura/recibo en caja', '/panel/mesas');
+      }
     }
     if (c.table === 'pedido_items' && fila.estado === 'retirar' && antes.estado !== 'retirar') {
       if (r === 'mesonero' || r === 'admin') {

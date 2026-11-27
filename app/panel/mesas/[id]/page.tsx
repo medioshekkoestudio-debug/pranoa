@@ -28,8 +28,10 @@ export default function DetalleMesa() {
   const [libres, setLibres] = useState<Mesa[]>([]);
   const [tasa, setTasa] = useState(0);
   const [pestana, setPestana] = useState<Pestana>('pedidos');
-  const [hoja, setHoja] = useState<'' | 'pedido' | 'mover'>('');
+  const [hoja, setHoja] = useState<'' | 'pedido' | 'mover' | 'factura'>('');
   const [pedidoEditar, setPedidoEditar] = useState<Pedido | null>(null);
+  const [datosFactura, setDatosFactura] = useState({ nombre: '', cedula: '', telefono: '', correo: '' });
+  const [enviandoFactura, setEnviandoFactura] = useState(false);
   const [ahora, setAhora] = useState(Date.now());
 
   useEffect(() => {
@@ -72,6 +74,34 @@ export default function DetalleMesa() {
     setHoja('mover');
   }
 
+  function abrirSolicitarFactura() {
+    setDatosFactura({
+      nombre: cuenta?.cliente_nombre || '',
+      cedula: cuenta?.cliente_cedula || '',
+      telefono: cuenta?.cliente_telefono || '',
+      correo: cuenta?.cliente_correo || '',
+    });
+    setHoja('factura');
+  }
+
+  async function enviarSolicitudFactura(e: React.FormEvent) {
+    e.preventDefault();
+    if (!cuenta) return;
+    setEnviandoFactura(true);
+    const ok = await hacer(rpc('solicitar_factura_cuenta', {
+      p_cuenta: cuenta.id,
+      p_nombre: datosFactura.nombre || null,
+      p_cedula: datosFactura.cedula || null,
+      p_telefono: datosFactura.telefono || null,
+      p_correo: datosFactura.correo || null,
+    }));
+    setEnviandoFactura(false);
+    if (ok) {
+      setHoja('');
+      cargar();
+    }
+  }
+
   if (!mesa) return <p className="p-6 text-taupe">Cargando…</p>;
 
   const validos = pedidos.filter((p) => p.estado !== 'cancelado');
@@ -106,15 +136,55 @@ export default function DetalleMesa() {
           </div>
         ) : (
           <>
-            <div className="tarjeta flex items-center justify-between">
-              <div>
-                <p className="text-sm text-taupe">Abierta hace {minutosDesde(cuenta.abierta_at, ahora)} min</p>
-                <p className="text-2xl font-bold">{usd(total)}</p>
-                {tasa > 0 && <p className="text-sm text-taupe">{bs(aBs(total, tasa))}</p>}
+            <div className="tarjeta space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm text-taupe">Abierta hace {minutosDesde(cuenta.abierta_at, ahora)} min</p>
+                  <p className="text-2xl font-bold">{usd(total)}</p>
+                  {tasa > 0 && <p className="text-sm text-taupe">{bs(aBs(total, tasa))}</p>}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button className="btn-primario py-2" onClick={() => { setPedidoEditar(null); setHoja('pedido'); }}>+ Pedido</button>
+                  <button className="btn-chico bg-crema" onClick={abrirMover}>Cambiar de mesa</button>
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <button className="btn-primario py-2" onClick={() => { setPedidoEditar(null); setHoja('pedido'); }}>+ Pedido</button>
-                <button className="btn-chico bg-crema" onClick={abrirMover}>Cambiar de mesa</button>
+
+              {/* Estado de factura / acciones de cuenta para Mesonero y Caja */}
+              {cuenta.factura_estado === 'solicitada' && (
+                <div className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 ring-1 ring-amber-200">
+                  ⏳ Factura solicitada a caja{cuenta.cliente_nombre ? ` (${cuenta.cliente_nombre})` : ''}. Esperando confirmación…
+                </div>
+              )}
+              {cuenta.factura_estado === 'lista' && (
+                <div className="rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-800 ring-1 ring-indigo-200">
+                  🧾 ¡Factura lista en caja! Pasa a retirarla y luego marca la mesa como Pagada.
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2 border-t border-ciruela/10 pt-3">
+                <button
+                  type="button"
+                  className="btn-chico flex-1 bg-naranja py-2.5 text-white hover:bg-naranja-oscuro"
+                  onClick={abrirSolicitarFactura}
+                >
+                  🧾 {cuenta.factura_estado === 'solicitada' ? 'Actualizar solicitud factura' : 'Solicitar factura / recibo'}
+                </button>
+                {esCaja && cuenta.factura_estado === 'solicitada' && (
+                  <button
+                    type="button"
+                    className="btn-chico bg-indigo-600 py-2.5 text-white hover:bg-indigo-700"
+                    onClick={() => hacer(rpc('marcar_factura_lista', { p_cuenta: cuenta.id })).then(cargar)}
+                  >
+                    ✓ Factura lista
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn-chico flex-1 bg-emerald-600 py-2.5 text-white hover:bg-emerald-700"
+                  onClick={() => confirm(`¿Marcar la Mesa ${mesa.nombre || mesa.numero} como Pagada y cerrarla?`) && hacer(rpc('marcar_mesa_pagada', { p_cuenta: cuenta.id })).then(cargar)}
+                >
+                  ✅ Marcar Pagado y cerrar mesa
+                </button>
               </div>
             </div>
 
@@ -276,6 +346,38 @@ export default function DetalleMesa() {
           pedidoEditar={pedidoEditar}
           onListo={() => { setHoja(''); setPedidoEditar(null); cargar(); }}
         />
+      </Hoja>
+
+      <Hoja abierta={hoja === 'factura'} onCerrar={() => setHoja('')} titulo={`Solicitar factura · Mesa ${mesa.nombre || mesa.numero}`}>
+        <form onSubmit={enviarSolicitudFactura} className="space-y-3">
+          <div className="rounded-xl bg-crema/70 p-3 text-sm">
+            <div className="flex justify-between font-bold">
+              <span>Total de la cuenta</span>
+              <span>{usd(total)}</span>
+            </div>
+            {tasa > 0 && <p className="text-right text-xs text-taupe">{bs(aBs(total, tasa))}</p>}
+          </div>
+          <p className="text-xs text-taupe">Datos del cliente para la factura o recibo (opcionales):</p>
+          <div>
+            <label className="etiqueta">Nombre o razón social</label>
+            <input className="campo" placeholder="Ej: María Pérez" value={datosFactura.nombre} onChange={(e) => setDatosFactura({ ...datosFactura, nombre: e.target.value })} />
+          </div>
+          <div>
+            <label className="etiqueta">Cédula / RIF</label>
+            <input className="campo" placeholder="Ej: V-12345678" value={datosFactura.cedula} onChange={(e) => setDatosFactura({ ...datosFactura, cedula: e.target.value })} />
+          </div>
+          <div>
+            <label className="etiqueta">Teléfono</label>
+            <input className="campo" inputMode="tel" placeholder="Ej: 0412-1234567" value={datosFactura.telefono} onChange={(e) => setDatosFactura({ ...datosFactura, telefono: e.target.value })} />
+          </div>
+          <div>
+            <label className="etiqueta">Correo electrónico</label>
+            <input className="campo" type="email" placeholder="cliente@correo.com" value={datosFactura.correo} onChange={(e) => setDatosFactura({ ...datosFactura, correo: e.target.value })} />
+          </div>
+          <button className="btn-naranja w-full" disabled={enviandoFactura}>
+            {enviandoFactura ? 'Enviando a caja…' : 'Enviar solicitud a caja'}
+          </button>
+        </form>
       </Hoja>
 
       <Hoja abierta={hoja === 'mover'} onCerrar={() => setHoja('')} titulo="Mover a otra mesa">

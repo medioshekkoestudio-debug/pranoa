@@ -55,6 +55,7 @@ export default function Caja() {
     acc[p.metodo].bs += Number(p.monto_bs || 0);
     return acc;
   }, {});
+  const solicitudesFactura = cuentas.filter((c) => c.factura_estado === 'solicitada');
 
   return (
     <>
@@ -62,6 +63,52 @@ export default function Caja() {
       <main className="mx-auto grid max-w-6xl gap-4 px-4 pt-4 lg:grid-cols-2">
         <div className="space-y-4">
           {aj && <TasaDelDia tasa={Number(aj.tasa_bs)} actualizada={aj.tasa_actualizada} fuente={aj.tasa_fuente} onCambio={cargar} />}
+
+          {/* Solicitudes de factura enviadas por mesoneros */}
+          <section className={`tarjeta ${solicitudesFactura.length > 0 ? 'ring-2 ring-red-400' : ''}`}>
+            <h2 className="mb-2 font-bold">Solicitudes de factura ({solicitudesFactura.length})</h2>
+            {solicitudesFactura.length === 0 && <p className="text-sm text-taupe">Sin solicitudes pendientes.</p>}
+            {solicitudesFactura.map((c) => {
+              const t = totalCuenta(c.id);
+              const tasaActual = Number(aj?.tasa_bs || 0);
+              return (
+                <div key={c.id} className="border-t border-ciruela/10 py-3 first:border-0">
+                  <div className="flex items-baseline justify-between">
+                    <p className="font-bold text-red-700">
+                      🧾 Mesa {c.mesas?.nombre || c.mesas?.numero}
+                      {c.factura_solicitada_at && (
+                        <span className="ml-2 text-xs font-normal text-taupe">hace {minutosDesde(c.factura_solicitada_at)} min</span>
+                      )}
+                    </p>
+                    <div className="text-right">
+                      <p className="font-bold">{usd(t)}</p>
+                      {tasaActual > 0 && <p className="text-xs text-taupe">{bs(Math.round(t * tasaActual * 100) / 100)}</p>}
+                    </div>
+                  </div>
+                  {(c.cliente_nombre || c.cliente_cedula || c.cliente_telefono || c.cliente_correo) && (
+                    <div className="mt-1.5 rounded-xl bg-crema/70 p-2 text-xs text-ciruela space-y-0.5">
+                      {c.cliente_nombre && <p><b>Cliente:</b> {c.cliente_nombre}</p>}
+                      {c.cliente_cedula && <p><b>Cédula / RIF:</b> {c.cliente_cedula}</p>}
+                      {c.cliente_telefono && <p><b>Teléfono:</b> {c.cliente_telefono}</p>}
+                      {c.cliente_correo && <p><b>Correo:</b> {c.cliente_correo}</p>}
+                    </div>
+                  )}
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="btn-chico flex-1 bg-indigo-600 py-2 text-white hover:bg-indigo-700"
+                      onClick={() => hacer(rpc('marcar_factura_lista', { p_cuenta: c.id })).then(cargar)}
+                    >
+                      ✓ Factura lista (avisar mesonero)
+                    </button>
+                    <Link href={`/panel/mesas/${c.mesa_id}`} className="btn-chico bg-crema py-2">
+                      Ver / Cobrar
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
 
           <section className="tarjeta">
             <h2 className="mb-2 font-bold">Pagos por verificar ({porVerificar.length})</h2>

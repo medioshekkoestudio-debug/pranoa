@@ -19,7 +19,16 @@ export interface Producto {
   activo?: boolean; solo_salon: boolean; orden: number; tiempo_prep_min?: number | null;
 }
 export interface Mesa { id: string; nombre: string; numero: number; ambiente: 'salon' | 'terraza'; capacidad: number; token: string; activa: boolean }
-export interface Cuenta { id: string; mesa_id: string; abierta: boolean; mesonero_id: string | null; abierta_at: string }
+export interface Cuenta {
+  id: string; mesa_id: string; abierta: boolean; mesonero_id: string | null; abierta_at: string;
+  factura_estado?: 'solicitada' | 'lista' | 'pagada' | null;
+  factura_solicitada_at?: string | null;
+  factura_lista_at?: string | null;
+  cliente_nombre?: string | null;
+  cliente_cedula?: string | null;
+  cliente_telefono?: string | null;
+  cliente_correo?: string | null;
+}
 export interface Zona { id: string; nombre: string; tarifa_usd: number; activa: boolean; orden: number }
 export interface PedidoItem {
   id: string; pedido_id: string; producto_id: string | null; nombre: string; precio_usd: number;
