@@ -609,3 +609,5 @@ revoke execute on function pedidos_de_mesa(uuid) from public;
 grant execute on function pedidos_de_mesa(uuid) to anon, authenticated;
 
 
+-- Refrescar caché de la API de Supabase (PostgREST) inmediatamente
+notify pgrst, 'reload schema';
