@@ -139,7 +139,7 @@ export default function ConfigMesas() {
         </form>
 
         <p className="text-sm text-taupe print:hidden">
-          Define el nombre, ambiente y cantidad de puestos de cada mesa. Todos los QR apuntan a <b>{DOMINIO_QR.replace('https://', '')}</b>. Si un QR se filtra, toca «Nuevo QR» y reimprime.
+          Define el nombre, ambiente y cantidad de puestos de cada mesa. Cada mesa mantiene un QR estático que apunta a <b>{DOMINIO_QR.replace('https://', '')}</b>.
         </p>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 print:grid-cols-3">
@@ -241,13 +241,6 @@ export default function ConfigMesas() {
                         }}
                       >
                         Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-chico bg-crema text-xs"
-                        onClick={() => confirm(`¿Generar un QR nuevo para la mesa ${etiqueta}? El impreso dejará de funcionar.`) && actualizar(m.id, { token: crypto.randomUUID() })}
-                      >
-                        Nuevo QR
                       </button>
                       <button
                         type="button"
