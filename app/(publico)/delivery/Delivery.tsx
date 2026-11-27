@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CartaInteractiva } from '@/components/CartaInteractiva';
 import { ResumenCarrito } from '@/components/ResumenCarrito';
@@ -22,6 +22,21 @@ export function Delivery({ categorias, productosIniciales, zonas, ajustes }: {
   const [abierta, setAbierta] = useState(false);
   const [paso, setPaso] = useState<1 | 2>(1);
   const [f, setF] = useState({ nombre: '', telefono: '', zona: '', direccion: '', notas: '', referencia: '' });
+
+  // Precargar datos si el cliente ya se registró desde el QR de una mesa
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('pranoa-cliente-perfil');
+      if (raw) {
+        const c = JSON.parse(raw) as { nombre?: string; telefono?: string };
+        setF((prev) => ({
+          ...prev,
+          nombre: prev.nombre || c.nombre || '',
+          telefono: prev.telefono || c.telefono || '',
+        }));
+      }
+    } catch { /* modo privado */ }
+  }, []);
   const [metodo, setMetodo] = useState<Metodo>('pago_movil');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');

@@ -86,7 +86,8 @@ export default function Mesas() {
                 <span className="text-2xl">{l.tipo === 'cuenta' ? '🧾' : '🔔'}</span>
                 <p className="flex-1 font-semibold">
                   Mesa {numeroMesa(l.mesa_id)} {l.tipo === 'cuenta' ? 'pide la cuenta' : 'llama al mesonero'}
-                  <span className="ml-2 text-sm font-normal opacity-80">hace {minutosDesde(l.created_at)} min</span>
+                  <span className="ml-2 text-sm font-normal opacity-80">hace {minutosDesde(l.created_at, ahora)} min</span>
+                  {l.nota && <span className="mt-0.5 block text-sm font-normal text-white/95">💬 «{l.nota}»</span>}
                 </p>
                 <button className="btn-chico bg-white text-ciruela" onClick={() => hacer(rpc('atender_llamada', { p_llamada: l.id }))}>Atendida</button>
               </div>

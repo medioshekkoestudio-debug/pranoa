@@ -130,7 +130,13 @@ export function MarcoPanel({ perfil, children }: { perfil: Perfil; children: Rea
       }
     }
     if (c.table === 'llamadas' && c.eventType === 'INSERT' && ['mesonero', 'cajero', 'admin'].includes(r)) {
-      sonar('llamada'); notificar(fila.tipo === 'cuenta' ? 'Piden la cuenta' : 'Llaman al mesonero', 'Revisa el mapa de mesas', '/panel/mesas');
+      const notaLlamada = fila.nota ? ` · "${String(fila.nota)}"` : '';
+      sonar('llamada');
+      notificar(
+        fila.tipo === 'cuenta' ? 'Piden la cuenta' : 'Llaman al mesonero',
+        (fila.tipo === 'cuenta' ? 'Una mesa solicita la cuenta' : 'Una mesa necesita atención') + notaLlamada,
+        '/panel/mesas',
+      );
     }
     if (c.table === 'reservas' && c.eventType === 'INSERT' && ['cajero', 'admin'].includes(r)) {
       notificar('Nueva reserva', `${fila.nombre ?? ''} · ${fila.personas ?? ''} personas`, '/panel/reservas');

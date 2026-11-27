@@ -49,7 +49,7 @@ export interface Pago {
   monto_bs: number | null; tasa: number | null; referencia: string | null; comensal: number | null;
   verificado: boolean; origen: 'personal' | 'web'; created_at: string;
 }
-export interface Llamada { id: string; mesa_id: string; tipo: 'mesonero' | 'cuenta'; atendida: boolean; created_at: string }
+export interface Llamada { id: string; mesa_id: string; tipo: 'mesonero' | 'cuenta'; nota?: string | null; atendida: boolean; created_at: string }
 export interface Reserva {
   id: string; nombre: string; telefono: string; fecha: string; hora: string; personas: number;
   ambiente: 'salon' | 'terraza'; notas: string | null;
