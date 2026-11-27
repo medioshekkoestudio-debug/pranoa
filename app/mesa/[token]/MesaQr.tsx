@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { CartaInteractiva } from '@/components/CartaInteractiva';
 import { ResumenCarrito } from '@/components/ResumenCarrito';
 import { Hoja } from '@/components/Hoja';
-import { Logo } from '@/components/Logo';
+import { Isotipo, Logo } from '@/components/Logo';
 import { MenuInferior } from '@/components/MenuInferior';
 import { paraEnviar, useCarrito } from '@/lib/carrito';
 import { useProductosVivos } from '@/lib/useProductosVivos';
@@ -283,6 +283,23 @@ export function MesaQr({
               </div>
               <span className="text-lg font-bold text-oliva">›</span>
             </button>
+
+            {/* Botón para ir a la landing principal con toda la información del restaurante */}
+            <Link
+              href="/"
+              className="tarjeta flex w-full items-center gap-3.5 text-left transition hover:bg-crema/40 active:scale-[0.99]"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-oliva/15 text-oliva">
+                <Isotipo className="h-7 w-7" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-bold text-ciruela">Conoce Pranoa</p>
+                <p className="text-xs text-taupe">
+                  Horario, ubicación, reservas, delivery y toda la información del restaurante.
+                </p>
+              </div>
+              <span className="text-lg font-bold text-oliva">›</span>
+            </Link>
 
             {/* Acceso rápido a delivery si ya se registró */}
             {cliente && (
