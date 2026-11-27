@@ -1,6 +1,6 @@
 # Pranoa — Actualización del proyecto
 
-_Fecha: 24 de noviembre de 2026 · revisado el 25 de noviembre de 2026_
+_Fecha: 24 de noviembre de 2026 · actualizado el 26 de noviembre de 2026_
 
 App web (PWA, se descarga al teléfono como una app) del restaurante **Pranoa · un refugio seguro**, Valencia, Carabobo.
 Hecha a partir de la propuesta técnica y el manual de marca. **Sin Firebase**: todo funciona con Supabase.
@@ -66,6 +66,15 @@ Las contraseñas las tiene la administración. No se guardan en este archivo.
   - Están en `public/marca/`.
   - Se regeneran con `npm run iconos`.
   - Ya publicado en la web.
+
+### Actualizaciones del 26 de noviembre de 2026
+- **Header e interfaz oficial**: título del perfil activo (`Administrador`, `Caja`, `Mesonero`, `Cocina`, `Motorizado`), icono oficial de usuario (reemplaza "Personal" en el header público), colores de marca en el panel (taupe + menú inferior oliva con íconos blancos) y banner del home con `fachada-pranoa.jpg`.
+- **Mesas oficiales y puestos configurables**: `A01` (6), `B01–B06` (6), `C01–C06` (2), `D01–D02` (8), `E01` (8), `F01–F07` (4), `G01` (10). El administrador puede agregar, editar nombre/puestos/ambiente y eliminar mesas.
+- **Tasa BCV automática diaria**: se sincroniza automáticamente cada día con el BCV (cron diario en Vercel + verificación al abrir la app).
+- **Mesonero**: botones `− / +` para sumar y restar comida directo en la carta, editar pedidos ya enviados a cocina (con nota y aviso sonoro a cocina), tiempos en vivo por mesa y estados tipo semáforo.
+- **Cocina (KDS)**: subestados por plato (**Preparando** rojo → **Retirar** amarillo → **Entregado** verde) con actualización automática de estados principales, hora de recepción, tiempo estimado por plato configurable por admin, alerta roja + campana + sonido al exceder tiempo, y perfil Cocina limpio sin opciones de cobro ni administración.
+- **Facturación Mesonero ↔ Cajero**: botón para solicitar factura/recibo con datos fiscales opcionales del cliente (Nombre, Cédula, Teléfono, Correo), aviso sonoro en Caja, botón "Factura lista" hacia Mesonero y botón "Marcar Pagado y cerrar mesa".
+- **Landing QR de mesa**: diseño jerárquico con Menú, Estatus por plato en vivo, Llamar mesonero (con nota y sonido), Registro del cliente (guarda perfil para compras y delivery) y Pedir cuenta.
 
 ### Datos de ejemplo cargados
 5 categorías, 14 platos, 12 mesas (de la 13 en adelante, terraza), 6 zonas de delivery en Valencia, tasa de ejemplo 40.

@@ -24,6 +24,11 @@ begin
   end if;
 end $$;
 grant select on clientes to authenticated;
+grant all on clientes to service_role;
+
+-- Endurecer tasas: solo admin y cajero leen histórico de tasas (cocina y motorizado no lo necesitan)
+drop policy if exists tasas_ver on tasas;
+create policy tasas_ver on tasas for select to authenticated using (tiene_rol('admin', 'cajero'));
 
 -- 2. Agregar columna nota a `llamadas` para mensajes del cliente al mesonero
 alter table llamadas add column if not exists nota text;

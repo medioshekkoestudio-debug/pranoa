@@ -21,11 +21,16 @@ la pantalla: aunque alguien manipule la app, la base rechaza lo que su perfil no
 ## Puesta en marcha
 
 1. **Supabase**: crear un proyecto nuevo (el de producción está en `us-west-2`; `us-east-1` queda más cerca de Venezuela).
-2. En el **SQL Editor** del proyecto Pranoa, correr **en orden, las cuatro**:
+2. En el **SQL Editor** del proyecto Pranoa, correr **en orden**:
    - `supabase/migrations/0001_inicial.sql`
-   - `supabase/migrations/0002_datos_ejemplo.sql` (carta, 12 mesas y zonas de Valencia de ejemplo)
+   - `supabase/migrations/0002_datos_ejemplo.sql` (carta y zonas de Valencia de ejemplo)
    - `supabase/migrations/0003_permisos_tablas.sql` (sin esta, la web no puede leer nada: los proyectos nuevos de Supabase no dan permisos de tabla por defecto)
    - `supabase/migrations/0004_corregir_proteger_perfil.sql` (sin esta, un mesonero podría ponerse rol de administrador)
+   - `supabase/migrations/0005_nombres_mesas.sql` (mesas alfanuméricas A01, B01-B06, C01-C06, D01-D02, E01, F01-F07, G01 + puestos configurables)
+   - `supabase/migrations/0006_editar_pedido_mesonero.sql` (edición de pedidos enviados a cocina con notificación)
+   - `supabase/migrations/0007_cocina_subestados_tiempos.sql` (subestados Preparando/Retirar/Entregado por plato y tiempo estimado por comida)
+   - `supabase/migrations/0008_flujo_factura_cuenta.sql` (solicitud de factura Mesonero ↔ Cajero con datos del cliente y cierre Pagado)
+   - `supabase/migrations/0009_clientes_y_llamadas_nota.sql` (registro de clientes QR, estatus por plato en mesa y nota al llamar mesonero)
 3. **Authentication → Sign In / Providers → Email**: desactivar **«Allow new users to sign up»**.
    Las cuentas del personal las crea el administrador desde la app.
 4. **Primer administrador**: el personal entra con **usuario**, no con correo; por dentro el usuario `admin_pranoa`
